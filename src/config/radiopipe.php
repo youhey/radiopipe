@@ -96,6 +96,17 @@ return [
         ],
     ],
 
+    'topic_editorial' => [
+        'analyzer' => env('RADIOPIPE_TOPIC_EDITORIAL_ANALYZER', 'fake'),
+        'model' => env('RADIOPIPE_TOPIC_EDITORIAL_MODEL', 'gpt-5.4-mini'),
+    ],
+
+    'openai' => [
+        'api_key' => env('OPENAI_API_KEY'),
+        'request_timeout' => (int) env('OPENAI_REQUEST_TIMEOUT', 60),
+        'max_retries' => (int) env('OPENAI_MAX_RETRIES', 2),
+    ],
+
     'news' => [
         'provider' => env('RADIOPIPE_NEWS_PROVIDER', 'fake'),
         'request_timeout' => (int) env('RADIOPIPE_NEWS_REQUEST_TIMEOUT', 10),

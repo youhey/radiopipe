@@ -37,6 +37,11 @@ It does not decide final scenario inclusion.
 | `App\Topics\Editorial\TopicEditorialStatus` | Status for this phase only. |
 
 These names are planned future implementation names, not current classes.
+`FakeTopicEditorialAnalyzer` exists for tests and safe local development.
+It returns deterministic placeholder output and does not perform real AI analysis or translation.
+`OpenAiTopicEditorialAnalyzer` is the real AI-backed implementation.
+It should perform localization, summarization, and editorial evaluation in one model call for cost efficiency.
+The safe default analyzer driver is `fake`.
 
 ## Input
 
