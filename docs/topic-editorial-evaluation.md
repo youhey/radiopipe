@@ -82,14 +82,19 @@ Conceptual shape:
   },
   "duplicate": {
     "canonical_key": "ai-chip-hbm-component-costs",
-    "similar_topic_ids": []
+    "similar_topic_ids": [],
+    "duplicate_of": null,
+    "confidence": null,
+    "reason": null
   },
   "scenario_notes": {
     "suggested_role": "top_story",
     "tone": "serious_but_accessible",
     "transition_hint": "AIインフラのコスト構造という流れで紹介できる",
     "avoid": []
-  }
+  },
+  "reasons": [],
+  "metadata": {}
 }
 ```
 
