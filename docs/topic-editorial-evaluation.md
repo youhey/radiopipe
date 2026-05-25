@@ -147,6 +147,8 @@ It should be defined in implementation documentation when the evaluator is added
 ## Semantic Duplicate Candidates
 
 Phase 6 should detect semantic duplicate candidates.
+`TopicDuplicateCandidateDetector` provides cheap deterministic candidate detection for obvious local matches.
+It is not a full semantic duplicate engine.
 
 It may use:
 
@@ -165,6 +167,7 @@ High-confidence duplicates may become `skipped_duplicate`.
 Weak duplicate candidates should usually remain `pending` and be left for Phase 7.
 
 Phase 6 should avoid aggressively skipping weak duplicate candidates.
+Embeddings and AI duplicate assessment are deferred.
 
 ## Scenario Notes
 

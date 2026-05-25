@@ -9,6 +9,16 @@ use App\Topics\TopicDraft;
  */
 class FakeTopicEditorialAnalyzer implements TopicEditorialAnalyzer
 {
+    private TopicDuplicateCandidateDetector $duplicateCandidateDetector;
+
+    /**
+     * Constructor.
+     */
+    public function __construct(?TopicDuplicateCandidateDetector $duplicateCandidateDetector = null)
+    {
+        $this->duplicateCandidateDetector = $duplicateCandidateDetector ?? new TopicDuplicateCandidateDetector();
+    }
+
     /**
      * TopicDraft から fake editorial evaluation を生成します。
      */
@@ -70,7 +80,7 @@ class FakeTopicEditorialAnalyzer implements TopicEditorialAnalyzer
                 isSensitive: $isSensitive,
             ),
             duplicate: new TopicDuplicateAssessment(
-                canonicalKey: $this->canonicalKey($title),
+                canonicalKey: $this->duplicateCandidateDetector->canonicalKey($topicDraft),
                 similarTopicIds: [],
                 duplicateOf: null,
                 confidence: null,
@@ -196,15 +206,6 @@ class FakeTopicEditorialAnalyzer implements TopicEditorialAnalyzer
         }
 
         return TopicEditorialStatus::Pending;
-    }
-
-    private function canonicalKey(string $title): ?string
-    {
-        $key = strtolower($title);
-        $key = preg_replace('/[^a-z0-9]+/', '-', $key);
-        $key = is_string($key) ? trim($key, '-') : '';
-
-        return $key === '' ? null : $key;
     }
 
     /**

@@ -31,7 +31,7 @@ class FakeTopicEditorialAnalyzerTest extends TestCase
         self::assertSame(83, $evaluation->editorialScore);
         self::assertSame('AI chip memory costs', $evaluation->localized->title);
         self::assertSame('main_story', $evaluation->scenarioNotes->suggestedRole);
-        self::assertSame('ai-chip-memory-costs', $evaluation->duplicate->canonicalKey);
+        self::assertStringStartsWith('url-', (string) $evaluation->duplicate->canonicalKey);
     }
 
     public function testItProducesSkippedUncertainForLowConfidenceInput(): void
