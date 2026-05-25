@@ -1,13 +1,14 @@
-# Topic Rule Evaluation
+# Topic Screening
 
-この文書は、`TopicDraft` に対する Stage 1 の deterministic な一次評価ルールを説明します。
-対象実装は `App\Topics\TopicRuleEvaluator` です。AI 評価、翻訳、要約、最終的なシナリオ採用判断は含みません。
+This document describes Stage 1 deterministic screening rules for `TopicDraft`.
+The target implementation is `App\Topics\Screening\TopicScreeningEvaluator`.
+This layer does not include AI evaluation, translation, summarization, editorial evaluation, final scenario inclusion, or TTS/audio processing.
 
 ## 入力
 
 入力は `TopicDraft` です。
 
-主に評価に使う値:
+主に screening に使う値:
 
 | 値 | 用途 |
 |---|---|
@@ -24,13 +25,13 @@
 
 ## 出力
 
-出力は `TopicRuleEvaluation` です。
+出力は `TopicScreeningEvaluation` です。
 
 | フィールド | 意味 |
 |---|---|
-| `pre_status` | Stage 1 の内部 pre status |
-| `rule_score` | 0-100 に clamp された一次評価スコア |
-| `signals` | 評価に使った数値・真偽値 signal |
+| `screening_status` | Stage 1 の内部 screening status |
+| `screening_score` | 0-100 に clamp された screening score |
+| `signals` | screening に使った数値・真偽値 signal |
 | `flags` | `is_duplicate` / `is_uncertain` / `is_sensitive` |
 | `reasons` | debug 用の短い理由文字列 |
 
@@ -95,7 +96,7 @@ upstream_confidence_score = round(confidence * 100)
 
 ### Content Type
 
-`content_type` は config の `radiopipe.topic_rules.content_type_scores` で管理します。
+`content_type` は config の `radiopipe.topic_screening.content_type_scores` で管理します。
 
 現在の既定値:
 
@@ -164,7 +165,7 @@ radiopipe では弱い eligibility/debug signal としてのみ扱います。
 | `upstream_selection.score = null` | 追加補正なし |
 
 status と score の合計後に `-5..+5` へ clamp します。
-そのため `selection.score` は `rule_score` を支配しません。
+そのため `selection_bonus` は `screening_score` を支配しません。
 
 ## Sensitive Flag
 
@@ -206,12 +207,12 @@ exploit
 
 この判定は低コストな deterministic flag であり、policy-heavy な moderation ではありません。
 
-## Rule Score
+## Screening Score
 
-`rule_score` は次の式で計算します。
+`screening_score` は次の式で計算します。
 
 ```txt
-rule_score =
+screening_score =
   freshness_score * 0.25
 + upstream_importance_score * 0.35
 + upstream_confidence_score * 0.25
@@ -222,7 +223,7 @@ rule_score =
 
 最後に整数へ丸め、`0..100` に clamp します。
 
-weights は `config/radiopipe.php` の `radiopipe.topic_rules.weights` で管理します。
+weights は `config/radiopipe.php` の `radiopipe.topic_screening.weights` で管理します。
 
 ## Flags
 
@@ -232,23 +233,25 @@ weights は `config/radiopipe.php` の `radiopipe.topic_rules.weights` で管理
 | `is_uncertain` | `upstream_confidence_score < 45` または `limitation_penalty >= 30` |
 | `is_sensitive` | sensitive keyword に一致 |
 
-## Pre Status
+## Screening Status
 
-`pre_status` は次の優先順で決定します。
+`screening_status` は次の優先順で決定します。
 
-| 優先順 | 条件 | `pre_status` |
+| 優先順 | 条件 | `screening_status` |
 |---:|---|---|
-| 1 | `is_duplicate = true` | `pre_skipped_duplicate` |
-| 2 | `is_sensitive = true` | `pre_skipped_sensitive` |
-| 3 | `is_uncertain = true` | `pre_skipped_uncertain` |
-| 4 | `rule_score < 45` | `pre_skipped_low_value` |
-| 5 | 上記に該当しない | `preselected` |
+| 1 | `is_duplicate = true` | `rejected_duplicate` |
+| 2 | `is_sensitive = true` | `rejected_sensitive` |
+| 3 | `is_uncertain = true` | `rejected_uncertain` |
+| 4 | `screening_score < 45` | `rejected_low_value` |
+| 5 | 上記に該当しない | `passed` |
 
-`45` は `radiopipe.topic_rules.thresholds.low_value_score` の既定値です。
+`45` は `radiopipe.topic_screening.thresholds.low_value_score` の既定値です。
 
 ## 注意点
 
-- Stage 1 は最終的な `Topic` status ではありません。
-- `preselected` はシナリオ採用を意味しません。
+- Topic Screening は最終的な `Topic` status ではありません。
+- `passed` はシナリオ採用を意味しません。
 - 重複判定は evaluator に渡された既知 URL 一覧との完全一致のみです。
-- semantic duplicate、embedding、AI 評価、翻訳、要約、ランキングはこの層では行いません。
+- semantic duplicate、embedding、AI 評価、翻訳、要約、ランキング、editorial evaluation、scenario inclusion はこの層では行いません。
+- upstream selection は弱い eligibility/debug signal としてのみ扱います。
+- `selection_bonus` は小さい bounded adjustment であり、`screening_score` を支配してはいけません。

@@ -2,23 +2,24 @@
 
 namespace Tests\Feature;
 
+use App\Topics\Screening\TopicScreeningEvaluation;
+use App\Topics\Screening\TopicScreeningEvaluator;
+use App\Topics\Screening\TopicScreeningStatus;
 use App\Topics\TopicDraft;
-use App\Topics\TopicPreStatus;
-use App\Topics\TopicRuleEvaluator;
 use Carbon\CarbonImmutable;
 use Tests\TestCase;
 
 /**
  * @internal
  */
-class TopicRuleEvaluatorTest extends TestCase
+class TopicScreeningEvaluatorTest extends TestCase
 {
-    public function testHighQualityFreshTopicBecomesPreselected(): void
+    public function testHighQualityFreshTopicPassesScreening(): void
     {
         $evaluation = $this->evaluate($this->draft());
 
-        self::assertSame(TopicPreStatus::Preselected, $evaluation->preStatus);
-        self::assertSame(95, $evaluation->ruleScore);
+        self::assertSame(TopicScreeningStatus::Passed, $evaluation->screeningStatus);
+        self::assertSame(95, $evaluation->screeningScore);
         self::assertFalse($evaluation->flags['is_duplicate']);
         self::assertFalse($evaluation->flags['is_uncertain']);
         self::assertFalse($evaluation->flags['is_sensitive']);
@@ -60,10 +61,10 @@ class TopicRuleEvaluatorTest extends TestCase
         self::assertSame(5, $selected->signals['selection_bonus']);
         self::assertSame(-3, $skipped->signals['selection_bonus']);
         self::assertSame(0, $missing->signals['selection_bonus']);
-        self::assertSame(8, $selected->ruleScore - $skipped->ruleScore);
+        self::assertSame(8, $selected->screeningScore - $skipped->screeningScore);
     }
 
-    public function testSelectionScoreDoesNotDominateRuleScore(): void
+    public function testSelectionScoreDoesNotDominateScreeningScore(): void
     {
         $zero = $this->evaluate($this->draft(upstreamSelection: [
             'status' => 'needs_content',
@@ -76,14 +77,14 @@ class TopicRuleEvaluatorTest extends TestCase
 
         self::assertSame(-2, $zero->signals['selection_bonus']);
         self::assertSame(2, $large->signals['selection_bonus']);
-        self::assertSame(4, $large->ruleScore - $zero->ruleScore);
+        self::assertSame(4, $large->screeningScore - $zero->screeningScore);
     }
 
-    public function testDuplicateUrlBecomesPreSkippedDuplicate(): void
+    public function testDuplicateUrlBecomesRejectedDuplicate(): void
     {
         $evaluation = $this->evaluate($this->draft(), ['https://example.test/article']);
 
-        self::assertSame(TopicPreStatus::PreSkippedDuplicate, $evaluation->preStatus);
+        self::assertSame(TopicScreeningStatus::RejectedDuplicate, $evaluation->screeningStatus);
         self::assertTrue($evaluation->flags['is_duplicate']);
         self::assertTrue($evaluation->signals['is_duplicate_url']);
         self::assertContains('duplicate URL', $evaluation->reasons);
@@ -103,7 +104,7 @@ class TopicRuleEvaluatorTest extends TestCase
     {
         $evaluation = $this->evaluate($this->draft(confidence: 0.44));
 
-        self::assertSame(TopicPreStatus::PreSkippedUncertain, $evaluation->preStatus);
+        self::assertSame(TopicScreeningStatus::RejectedUncertain, $evaluation->screeningStatus);
         self::assertTrue($evaluation->flags['is_uncertain']);
         self::assertSame(44, $evaluation->signals['upstream_confidence_score']);
         self::assertContains('digestpipe confidence is low', $evaluation->reasons);
@@ -116,7 +117,7 @@ class TopicRuleEvaluatorTest extends TestCase
 
         self::assertSame(85, $strong->signals['content_type_score']);
         self::assertSame(25, $weak->signals['content_type_score']);
-        self::assertLessThan($strong->ruleScore, $weak->ruleScore);
+        self::assertLessThan($strong->screeningScore, $weak->screeningScore);
         self::assertContains('content type is weak', $weak->reasons);
     }
 
@@ -126,7 +127,7 @@ class TopicRuleEvaluatorTest extends TestCase
 
         self::assertSame(30, $evaluation->signals['limitation_penalty']);
         self::assertTrue($evaluation->flags['is_uncertain']);
-        self::assertSame(TopicPreStatus::PreSkippedUncertain, $evaluation->preStatus);
+        self::assertSame(TopicScreeningStatus::RejectedUncertain, $evaluation->screeningStatus);
         self::assertContains('limitations mention weak source quality', $evaluation->reasons);
     }
 
@@ -137,12 +138,12 @@ class TopicRuleEvaluatorTest extends TestCase
             tags: ['security breach'],
         ));
 
-        self::assertSame(TopicPreStatus::PreSkippedSensitive, $evaluation->preStatus);
+        self::assertSame(TopicScreeningStatus::RejectedSensitive, $evaluation->screeningStatus);
         self::assertTrue($evaluation->flags['is_sensitive']);
         self::assertContains('topic contains sensitive keyword', $evaluation->reasons);
     }
 
-    public function testLowTotalRuleScoreBecomesPreSkippedLowValue(): void
+    public function testLowTotalScreeningScoreBecomesRejectedLowValue(): void
     {
         $evaluation = $this->evaluate($this->draft(
             importance: 1,
@@ -155,31 +156,31 @@ class TopicRuleEvaluatorTest extends TestCase
             ],
         ));
 
-        self::assertSame(TopicPreStatus::PreSkippedLowValue, $evaluation->preStatus);
-        self::assertLessThan(45, $evaluation->ruleScore);
-        self::assertContains('rule score is below threshold', $evaluation->reasons);
+        self::assertSame(TopicScreeningStatus::RejectedLowValue, $evaluation->screeningStatus);
+        self::assertLessThan(45, $evaluation->screeningScore);
+        self::assertContains('screening score is below threshold', $evaluation->reasons);
     }
 
-    public function testRuleScoreIsClampedToZeroAndOneHundred(): void
+    public function testScreeningScoreIsClampedToZeroAndOneHundred(): void
     {
         config([
-            'radiopipe.topic_rules.weights.freshness' => 1.0,
-            'radiopipe.topic_rules.weights.importance' => 1.0,
-            'radiopipe.topic_rules.weights.confidence' => 1.0,
-            'radiopipe.topic_rules.weights.content_type' => 1.0,
+            'radiopipe.topic_screening.weights.freshness' => 1.0,
+            'radiopipe.topic_screening.weights.importance' => 1.0,
+            'radiopipe.topic_screening.weights.confidence' => 1.0,
+            'radiopipe.topic_screening.weights.content_type' => 1.0,
         ]);
 
-        self::assertSame(100, $this->evaluate($this->draft())->ruleScore);
+        self::assertSame(100, $this->evaluate($this->draft())->screeningScore);
 
         config([
-            'radiopipe.topic_rules.penalties.limitation_keyword' => 250,
-            'radiopipe.topic_rules.weights.freshness' => 0.25,
-            'radiopipe.topic_rules.weights.importance' => 0.35,
-            'radiopipe.topic_rules.weights.confidence' => 0.25,
-            'radiopipe.topic_rules.weights.content_type' => 0.15,
+            'radiopipe.topic_screening.penalties.limitation_keyword' => 250,
+            'radiopipe.topic_screening.weights.freshness' => 0.25,
+            'radiopipe.topic_screening.weights.importance' => 0.35,
+            'radiopipe.topic_screening.weights.confidence' => 0.25,
+            'radiopipe.topic_screening.weights.content_type' => 0.15,
         ]);
 
-        self::assertSame(0, $this->evaluate($this->draft(limitations: 'headline only'))->ruleScore);
+        self::assertSame(0, $this->evaluate($this->draft(limitations: 'headline only'))->screeningScore);
     }
 
     public function testMissingOptionalFieldsDoNotCrash(): void
@@ -221,8 +222,8 @@ class TopicRuleEvaluatorTest extends TestCase
         $evaluation = $this->evaluate($this->draft());
 
         self::assertSame([
-            'pre_status' => 'preselected',
-            'rule_score' => 95,
+            'screening_status' => 'passed',
+            'screening_score' => 95,
             'signals' => [
                 'is_duplicate_url' => false,
                 'freshness_score' => 100,
@@ -250,9 +251,9 @@ class TopicRuleEvaluatorTest extends TestCase
     /**
      * @param list<string> $seenUrls
      */
-    private function evaluate(TopicDraft $draft, array $seenUrls = []): \App\Topics\TopicRuleEvaluation
+    private function evaluate(TopicDraft $draft, array $seenUrls = []): TopicScreeningEvaluation
     {
-        return (new TopicRuleEvaluator())->evaluate(
+        return (new TopicScreeningEvaluator())->evaluate(
             $draft,
             $seenUrls,
             CarbonImmutable::parse('2026-05-25T12:00:00Z'),

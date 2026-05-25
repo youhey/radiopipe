@@ -1,20 +1,21 @@
 <?php
 
-namespace App\Topics;
+namespace App\Topics\Screening;
 
+use App\Topics\TopicDraft;
 use Carbon\CarbonImmutable;
 
 /**
- * TopicDraft を低コストな deterministic rule で pre-evaluate します。
+ * TopicDraft を低コストな deterministic screening で評価します。
  */
-class TopicRuleEvaluator
+class TopicScreeningEvaluator
 {
     /**
-     * TopicDraft を Stage 1 rule で評価します。
+     * TopicDraft を Stage 1 screening で評価します。
      *
      * @param list<string> $seenUrls
      */
-    public function evaluate(TopicDraft $draft, array $seenUrls = [], ?CarbonImmutable $now = null): TopicRuleEvaluation
+    public function evaluate(TopicDraft $draft, array $seenUrls = [], ?CarbonImmutable $now = null): TopicScreeningEvaluation
     {
         $current = $now ?? CarbonImmutable::now('UTC');
         $reasons = [];
@@ -27,8 +28,8 @@ class TopicRuleEvaluator
         $limitationPenalty = $this->limitationPenalty($draft, $reasons);
         $selectionBonus = $this->selectionBonus($draft, $reasons);
         $isSensitive = $this->isSensitive($draft, $reasons);
-        $isUncertain = $confidenceScore < $this->intConfig('radiopipe.topic_rules.thresholds.uncertain_confidence_score', 45)
-            || $limitationPenalty >= $this->intConfig('radiopipe.topic_rules.thresholds.strong_limitation_penalty', 30);
+        $isUncertain = $confidenceScore < $this->intConfig('radiopipe.topic_screening.thresholds.uncertain_confidence_score', 45)
+            || $limitationPenalty >= $this->intConfig('radiopipe.topic_screening.thresholds.strong_limitation_penalty', 30);
 
         if ($isDuplicateUrl) {
             $reasons[] = 'duplicate URL';
@@ -38,24 +39,24 @@ class TopicRuleEvaluator
             $reasons[] = 'topic is uncertain';
         }
 
-        $weightedScore = $freshnessScore * $this->floatConfig('radiopipe.topic_rules.weights.freshness', 0.25)
-            + $importanceScore * $this->floatConfig('radiopipe.topic_rules.weights.importance', 0.35)
-            + $confidenceScore * $this->floatConfig('radiopipe.topic_rules.weights.confidence', 0.25)
-            + $contentTypeScore * $this->floatConfig('radiopipe.topic_rules.weights.content_type', 0.15)
+        $weightedScore = $freshnessScore * $this->floatConfig('radiopipe.topic_screening.weights.freshness', 0.25)
+            + $importanceScore * $this->floatConfig('radiopipe.topic_screening.weights.importance', 0.35)
+            + $confidenceScore * $this->floatConfig('radiopipe.topic_screening.weights.confidence', 0.25)
+            + $contentTypeScore * $this->floatConfig('radiopipe.topic_screening.weights.content_type', 0.15)
             - $limitationPenalty
             + $selectionBonus;
 
-        $ruleScore = $this->clampInt((int) round($weightedScore), 0, 100);
-        $lowValueThreshold = $this->intConfig('radiopipe.topic_rules.thresholds.low_value_score', 45);
-        $preStatus = $this->preStatus($isDuplicateUrl, $isSensitive, $isUncertain, $ruleScore, $lowValueThreshold);
+        $screeningScore = $this->clampInt((int) round($weightedScore), 0, 100);
+        $lowValueThreshold = $this->intConfig('radiopipe.topic_screening.thresholds.low_value_score', 45);
+        $screeningStatus = $this->screeningStatus($isDuplicateUrl, $isSensitive, $isUncertain, $screeningScore, $lowValueThreshold);
 
-        if ($ruleScore < $lowValueThreshold) {
-            $reasons[] = 'rule score is below threshold';
+        if ($screeningScore < $lowValueThreshold) {
+            $reasons[] = 'screening score is below threshold';
         }
 
-        return new TopicRuleEvaluation(
-            preStatus: $preStatus,
-            ruleScore: $ruleScore,
+        return new TopicScreeningEvaluation(
+            screeningStatus: $screeningStatus,
+            screeningScore: $screeningScore,
             signals: [
                 'is_duplicate_url' => $isDuplicateUrl,
                 'freshness_score' => $freshnessScore,
@@ -124,7 +125,7 @@ class TopicRuleEvaluator
     private function importanceScore(TopicDraft $draft, array &$reasons): int
     {
         $importance = is_int($draft->importance) ? $draft->importance : null;
-        $map = $this->intMapConfig('radiopipe.topic_rules.importance_scores', [
+        $map = $this->intMapConfig('radiopipe.topic_screening.importance_scores', [
             5 => 100,
             4 => 80,
             3 => 60,
@@ -176,7 +177,7 @@ class TopicRuleEvaluator
     private function contentTypeScore(TopicDraft $draft, array &$reasons): int
     {
         $contentType = $draft->contentType ?? 'unknown';
-        $map = $this->intMapConfig('radiopipe.topic_rules.content_type_scores', []);
+        $map = $this->intMapConfig('radiopipe.topic_screening.content_type_scores', []);
         $score = $map[$contentType] ?? $map['unknown'] ?? 45;
 
         if ($score >= 75) {
@@ -201,11 +202,11 @@ class TopicRuleEvaluator
             return 0;
         }
 
-        foreach ($this->stringListConfig('radiopipe.topic_rules.limitation_keywords') as $keyword) {
+        foreach ($this->stringListConfig('radiopipe.topic_screening.limitation_keywords') as $keyword) {
             if (str_contains($haystack, strtolower($keyword))) {
                 $reasons[] = 'limitations mention weak source quality';
 
-                return $this->intConfig('radiopipe.topic_rules.penalties.limitation_keyword', 30);
+                return $this->intConfig('radiopipe.topic_screening.penalties.limitation_keyword', 30);
             }
         }
 
@@ -258,7 +259,7 @@ class TopicRuleEvaluator
             implode(' ', $draft->tags),
         ], static fn (?string $value): bool => $value !== null && $value !== '')));
 
-        foreach ($this->stringListConfig('radiopipe.topic_rules.sensitive_keywords') as $keyword) {
+        foreach ($this->stringListConfig('radiopipe.topic_screening.sensitive_keywords') as $keyword) {
             if (str_contains($haystack, strtolower($keyword))) {
                 $reasons[] = 'topic contains sensitive keyword';
 
@@ -269,25 +270,25 @@ class TopicRuleEvaluator
         return false;
     }
 
-    private function preStatus(bool $isDuplicate, bool $isSensitive, bool $isUncertain, int $ruleScore, int $lowValueThreshold): TopicPreStatus
+    private function screeningStatus(bool $isDuplicate, bool $isSensitive, bool $isUncertain, int $screeningScore, int $lowValueThreshold): TopicScreeningStatus
     {
         if ($isDuplicate) {
-            return TopicPreStatus::PreSkippedDuplicate;
+            return TopicScreeningStatus::RejectedDuplicate;
         }
 
         if ($isSensitive) {
-            return TopicPreStatus::PreSkippedSensitive;
+            return TopicScreeningStatus::RejectedSensitive;
         }
 
         if ($isUncertain) {
-            return TopicPreStatus::PreSkippedUncertain;
+            return TopicScreeningStatus::RejectedUncertain;
         }
 
-        if ($ruleScore < $lowValueThreshold) {
-            return TopicPreStatus::PreSkippedLowValue;
+        if ($screeningScore < $lowValueThreshold) {
+            return TopicScreeningStatus::RejectedLowValue;
         }
 
-        return TopicPreStatus::Preselected;
+        return TopicScreeningStatus::Passed;
     }
 
     private function clampInt(int $value, int $min, int $max): int

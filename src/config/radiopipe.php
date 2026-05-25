@@ -15,7 +15,7 @@ return [
         'default_limit' => (int) env('RADIOPIPE_UPSTREAM_DEFAULT_LIMIT', 100),
     ],
 
-    'topic_rules' => [
+    'topic_screening' => [
         'weights' => [
             'freshness' => 0.25,
             'importance' => 0.35,
