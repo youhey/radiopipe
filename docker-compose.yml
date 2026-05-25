@@ -1,0 +1,99 @@
+services:
+  php-cli:
+    build:
+      context: .
+      dockerfile: docker/php/cli/Dockerfile
+    working_dir: /var/www/html
+    volumes:
+      - ./src:/var/www/html
+    depends_on:
+      mysql:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    command: sleep infinity
+
+  php-fpm:
+    build:
+      context: .
+      dockerfile: docker/php/fpm/Dockerfile
+    working_dir: /var/www/html
+    volumes:
+      - ./src:/var/www/html
+    depends_on:
+      mysql:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
+  nginx:
+    image: nginx:1.29-alpine
+    ports:
+      - "${FORWARD_NGINX_PORT:-8080}:80"
+    volumes:
+      - ./src:/var/www/html:ro
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - php-fpm
+
+  node:
+    image: node:24-bookworm-slim
+    working_dir: /var/www/html
+    volumes:
+      - ./src:/var/www/html
+    ports:
+      - "${FORWARD_VITE_PORT:-5173}:5173"
+    command: sleep infinity
+
+  mysql:
+    image: mysql:8.4
+    ports:
+      - "${FORWARD_MYSQL_PORT:-3306}:3306"
+    environment:
+      MYSQL_DATABASE: "${DB_DATABASE:-radiopipe}"
+      MYSQL_USER: "${DB_USERNAME:-radiopipe}"
+      MYSQL_PASSWORD: "${DB_PASSWORD:-radiopipe}"
+      MYSQL_ROOT_PASSWORD: "${DB_ROOT_PASSWORD:-root}"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./docker/mysql/init-test-databases.sh:/docker-entrypoint-initdb.d/20-init-test-databases.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$${MYSQL_USER} -p$${MYSQL_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  valkey:
+    image: valkey/valkey:9-alpine
+    ports:
+      - "${FORWARD_VALKEY_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  minio:
+    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
+    command: server /data --console-address ":9001"
+    ports:
+      - "${FORWARD_MINIO_SERVICE_PORT:-9000}:9000"
+      - "${FORWARD_MINIO_CONSOLE_PORT:-9001}:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+volumes:
+  mysql-data:
+  minio-data:
