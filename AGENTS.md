@@ -352,6 +352,46 @@ Non-goals unless explicitly requested:
 * Mobile application development.
 * User registration or public multi-tenant SaaS flows.
 
+Core Domain Vocabulary
+
+These terms define intended radiopipe model boundaries. Keep names consistent across code, tests, documentation, and JSON output once each concept is implemented.
+
+* Episode: One generated output package for a specific run, date, or time slot. It contains the final Scenario plus contextual data such as WeatherReport, HeadlineNews, Topics, and metadata.
+* Scenario: The actual radio-style reading script. This is the content intended for narration or TTS.
+* Topic: A curated, processed topic derived mainly from upstream digest articles, such as digestpipe records. Avoid calling these items News when Topic is more accurate.
+* HeadlineNews: General major news collected from a news provider, NewsAPI-style provider, or RSS provider. This is contextual material, not the primary geek-news content.
+* WeatherReport: Normalized weather data from a weather provider, optionally with a short human-readable summary for the Scenario.
+* UpstreamArticleItem: A normalized article record fetched from an upstream digest provider such as digestpipe. This is input material before it becomes a Topic.
+* Rundown: A planned program structure before the final script is written. It may include selected Topics, ordering, section intent, transitions, and timing.
+* Provider: A replaceable integration layer for external or upstream data sources. Providers should hide external response shapes from higher-level application code.
+
+The final output concept is an Episode. A future JSON representation is expected to look conceptually like this, but this is not current API behavior:
+
+```json
+{
+  "schema_version": "1.0",
+  "id": "episode_2026-05-25_morning",
+  "date": "2026-05-25",
+  "published_at": "2026-05-25T07:00:00+09:00",
+  "processed_at": "2026-05-25T06:45:12+09:00",
+  "scenario": {},
+  "weather": {},
+  "headline_news": {},
+  "topics": [],
+  "metadata": {}
+}
+```
+
+Naming guidance:
+
+* Use Scenario for the script itself.
+* Use Episode for the whole generated package returned to downstream applications.
+* Use Topic for curated digest/upstream-derived items.
+* Use HeadlineNews only for general news/headline-provider items.
+* Avoid naming upstream-derived geek articles as News in radiopipe domain code when Topic is more accurate.
+* Keep provider DTOs separate from final Episode DTOs.
+* Do not let provider-specific response shapes leak into Episode, Scenario, or Topic models.
+
 Upstream Digest Providers
 
 Upstream digest providers supply structured article data. digestpipe is the initial expected provider, but the application should not hard-code provider-specific behavior into business logic.

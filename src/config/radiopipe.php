@@ -5,6 +5,16 @@ $weatherDefaultLongitude = env('RADIOPIPE_WEATHER_DEFAULT_LONGITUDE');
 $rssFeeds = env('RADIOPIPE_RSS_FEEDS', '');
 
 return [
+    'upstream' => [
+        'provider' => env('RADIOPIPE_UPSTREAM_PROVIDER', 'fake'),
+        'url' => env('RADIOPIPE_UPSTREAM_URL'),
+        'key' => env('RADIOPIPE_UPSTREAM_KEY'),
+        'request_timeout' => (int) env('RADIOPIPE_UPSTREAM_REQUEST_TIMEOUT', 30),
+        'max_retries' => (int) env('RADIOPIPE_UPSTREAM_MAX_RETRIES', 2),
+        'default_window_hours' => (int) env('RADIOPIPE_UPSTREAM_DEFAULT_WINDOW_HOURS', 24),
+        'default_limit' => (int) env('RADIOPIPE_UPSTREAM_DEFAULT_LIMIT', 100),
+    ],
+
     'news' => [
         'provider' => env('RADIOPIPE_NEWS_PROVIDER', 'fake'),
         'request_timeout' => (int) env('RADIOPIPE_NEWS_REQUEST_TIMEOUT', 10),
