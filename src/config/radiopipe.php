@@ -2,8 +2,32 @@
 
 $weatherDefaultLatitude = env('RADIOPIPE_WEATHER_DEFAULT_LATITUDE');
 $weatherDefaultLongitude = env('RADIOPIPE_WEATHER_DEFAULT_LONGITUDE');
+$rssFeeds = env('RADIOPIPE_RSS_FEEDS', '');
 
 return [
+    'news' => [
+        'provider' => env('RADIOPIPE_NEWS_PROVIDER', 'fake'),
+        'request_timeout' => (int) env('RADIOPIPE_NEWS_REQUEST_TIMEOUT', 10),
+        'max_retries' => (int) env('RADIOPIPE_NEWS_MAX_RETRIES', 2),
+    ],
+
+    'newsapi' => [
+        'base_url' => env('RADIOPIPE_NEWSAPI_BASE_URL', 'https://newsapi.org'),
+        'api_key' => env('RADIOPIPE_NEWSAPI_KEY'),
+        'country' => env('RADIOPIPE_NEWSAPI_COUNTRY', 'jp'),
+        'category' => env('RADIOPIPE_NEWSAPI_CATEGORY', 'general'),
+        'language' => env('RADIOPIPE_NEWSAPI_LANGUAGE', 'ja'),
+        'page_size' => (int) env('RADIOPIPE_NEWSAPI_PAGE_SIZE', 20),
+        'sources' => env('RADIOPIPE_NEWSAPI_SOURCES'),
+    ],
+
+    'rss' => [
+        'feed_urls' => array_values(array_filter(
+            array_map('trim', explode(',', is_string($rssFeeds) ? $rssFeeds : '')),
+            static fn (string $feedUrl): bool => $feedUrl !== '',
+        )),
+    ],
+
     'weather' => [
         'provider' => env('RADIOPIPE_WEATHER_PROVIDER', 'fake'),
         'request_timeout' => (int) env('RADIOPIPE_WEATHER_REQUEST_TIMEOUT', 10),

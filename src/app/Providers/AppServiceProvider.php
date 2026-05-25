@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\News\NewsProvider;
+use App\News\NewsProviderManager;
 use App\Weather\WeatherProvider;
 use App\Weather\WeatherProviderManager;
 use Illuminate\Support\ServiceProvider;
@@ -13,7 +15,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->singleton(NewsProviderManager::class);
         $this->app->singleton(WeatherProviderManager::class);
+
+        $this->app->bind(NewsProvider::class, function (): NewsProvider {
+            return $this->app->make(NewsProviderManager::class)->driver();
+        });
 
         $this->app->bind(WeatherProvider::class, function (): WeatherProvider {
             return $this->app->make(WeatherProviderManager::class)->driver();
