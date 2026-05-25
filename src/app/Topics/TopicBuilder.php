@@ -45,6 +45,10 @@ class TopicBuilder
                 'provider' => $item->providerName,
                 'upstream_id' => $item->upstreamId,
             ],
+            upstreamSelection: [
+                'status' => $this->stringValue($item->selection['status'] ?? null),
+                'score' => $this->intValue($item->selection['score'] ?? null),
+            ],
         );
     }
 
@@ -130,6 +134,22 @@ class TopicBuilder
         }
 
         return (float) $value;
+    }
+
+    /**
+     * int 値を取得します。
+     */
+    private function intValue(mixed $value): ?int
+    {
+        if (is_int($value)) {
+            return $value;
+        }
+
+        if (is_string($value) && filter_var($value, FILTER_VALIDATE_INT) !== false) {
+            return (int) $value;
+        }
+
+        return null;
     }
 
     /**

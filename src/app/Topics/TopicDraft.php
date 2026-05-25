@@ -63,12 +63,16 @@ class TopicDraft
     /** @var array{provider: string, upstream_id: int|string} source reference */
     public array $sourceRefs;
 
+    /** @var array{status?: string|null, score?: int|null} upstream selection metadata */
+    public array $upstreamSelection;
+
     /**
      * Constructor.
      *
      * @param list<string> $tags
      * @param list<string> $entities
      * @param array{provider: string, upstream_id: int|string} $sourceRefs
+     * @param array{status?: string|null, score?: int|null} $upstreamSelection
      */
     public function __construct(
         string $id,
@@ -89,6 +93,7 @@ class TopicDraft
         ?CarbonImmutable $publishedAt,
         ?CarbonImmutable $fetchedAt,
         array $sourceRefs,
+        array $upstreamSelection = [],
     ) {
         $this->id = $id;
         $this->sourceType = $sourceType;
@@ -108,6 +113,7 @@ class TopicDraft
         $this->publishedAt = $publishedAt;
         $this->fetchedAt = $fetchedAt;
         $this->sourceRefs = $sourceRefs;
+        $this->upstreamSelection = $upstreamSelection;
     }
 
     /**
@@ -131,7 +137,8 @@ class TopicDraft
      *     limitations: string|null,
      *     published_at: string|null,
      *     fetched_at: string|null,
-     *     source_refs: array{provider: string, upstream_id: int|string}
+     *     source_refs: array{provider: string, upstream_id: int|string},
+     *     upstream_selection: array{status?: string|null, score?: int|null}
      * }
      */
     public function toArray(): array
@@ -155,6 +162,7 @@ class TopicDraft
             'published_at' => $this->publishedAt?->toJSON(),
             'fetched_at' => $this->fetchedAt?->toJSON(),
             'source_refs' => $this->sourceRefs,
+            'upstream_selection' => $this->upstreamSelection,
         ];
     }
 }

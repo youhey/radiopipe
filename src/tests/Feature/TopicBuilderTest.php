@@ -137,6 +137,10 @@ class TopicBuilderTest extends TestCase
                 'provider' => 'digestpipe',
                 'upstream_id' => 213,
             ],
+            'upstream_selection' => [
+                'status' => 'selected',
+                'score' => null,
+            ],
         ], $draft->toArray());
     }
 
