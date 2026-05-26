@@ -61,4 +61,32 @@ class UpstreamArticleItem
         $this->fetchedAt = $fetchedAt;
         $this->providerName = $providerName;
     }
+
+    /**
+     * JSON 出力向けの配列へ変換します。
+     *
+     * @return array{
+     *     upstream_id: int|string,
+     *     source: array<string, mixed>,
+     *     article: array<string, mixed>,
+     *     selection: array<string, mixed>,
+     *     analysis: array<string, mixed>,
+     *     processing: array<string, mixed>,
+     *     fetched_at: string,
+     *     provider_name: string
+     * }
+     */
+    public function toArray(): array
+    {
+        return [
+            'upstream_id' => $this->upstreamId,
+            'source' => $this->source,
+            'article' => $this->article,
+            'selection' => $this->selection,
+            'analysis' => $this->analysis,
+            'processing' => $this->processing,
+            'fetched_at' => $this->fetchedAt->toJSON(),
+            'provider_name' => $this->providerName,
+        ];
+    }
 }
