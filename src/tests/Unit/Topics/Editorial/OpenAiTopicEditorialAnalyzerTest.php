@@ -38,6 +38,9 @@ class OpenAiTopicEditorialAnalyzerTest extends TestCase
             $payload = $request->data();
             $text = $payload['text'] ?? null;
             $format = is_array($text) ? ($text['format'] ?? null) : null;
+            $schema = is_array($format) ? ($format['schema'] ?? null) : null;
+            $properties = is_array($schema) ? ($schema['properties'] ?? null) : null;
+            $metadata = is_array($properties) ? ($properties['metadata'] ?? null) : null;
             $instructions = $payload['instructions'] ?? null;
 
             return $request->url() === 'https://api.openai.com/v1/responses'
@@ -46,6 +49,8 @@ class OpenAiTopicEditorialAnalyzerTest extends TestCase
                 && is_array($format)
                 && ($format['type'] ?? null) === 'json_schema'
                 && ($format['name'] ?? null) === 'topic_editorial_evaluation'
+                && is_array($metadata)
+                && ($metadata['additionalProperties'] ?? null) === false
                 && is_string($instructions)
                 && str_contains($instructions, 'Return only structured JSON');
         });
@@ -143,11 +148,20 @@ class OpenAiTopicEditorialAnalyzerTest extends TestCase
     public function testHttpFailureFailsClearly(): void
     {
         Http::fake([
-            'https://api.openai.com/v1/responses' => Http::response(['error' => ['message' => 'unavailable']], 503),
+            'https://api.openai.com/v1/responses' => Http::response([
+                'error' => [
+                    'message' => 'Invalid schema for response format.',
+                    'type' => 'invalid_request_error',
+                    'code' => 'invalid_json_schema',
+                ],
+            ], 400),
         ]);
 
         $this->expectException(TopicEditorialAnalyzerException::class);
-        $this->expectExceptionMessage('HTTP status [503]');
+        $this->expectExceptionMessage('HTTP status [400]');
+        $this->expectExceptionMessage('error.message [Invalid schema for response format.]');
+        $this->expectExceptionMessage('error.type [invalid_request_error]');
+        $this->expectExceptionMessage('error.code [invalid_json_schema]');
 
         $this->analyzer()->analyze($this->draft());
     }

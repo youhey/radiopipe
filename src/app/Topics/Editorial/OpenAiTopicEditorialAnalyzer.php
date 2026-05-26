@@ -3,6 +3,7 @@
 namespace App\Topics\Editorial;
 
 use App\Topics\TopicDraft;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use InvalidArgumentException;
 use ValueError;
@@ -49,7 +50,7 @@ class OpenAiTopicEditorialAnalyzer implements TopicEditorialAnalyzer
             ->post('/v1/responses', $this->requestPayload($topicDraft));
 
         if ($response->failed()) {
-            throw TopicEditorialAnalyzerException::failedHttpResponse('openai', $response->status());
+            throw TopicEditorialAnalyzerException::failedHttpResponse('openai', $response->status(), $this->errorDetailsFromResponse($response));
         }
 
         $payload = $response->json();
@@ -68,6 +69,38 @@ class OpenAiTopicEditorialAnalyzer implements TopicEditorialAnalyzer
 
         /** @var array<string, mixed> $decoded */
         return $this->evaluationFromArray($decoded);
+    }
+
+    /**
+     * OpenAI error object から公開してよい最小限の詳細だけを取り出します。
+     *
+     * @return array{message?: string, type?: string, code?: string}
+     */
+    private function errorDetailsFromResponse(Response $response): array
+    {
+        $payload = $response->json();
+
+        if (! is_array($payload)) {
+            return [];
+        }
+
+        $error = $payload['error'] ?? null;
+
+        if (! is_array($error)) {
+            return [];
+        }
+
+        $details = [];
+
+        foreach (['message', 'type', 'code'] as $key) {
+            $value = $error[$key] ?? null;
+
+            if (is_string($value) && trim($value) !== '') {
+                $details[$key] = $value;
+            }
+        }
+
+        return $details;
     }
 
     /**
@@ -222,7 +255,11 @@ class OpenAiTopicEditorialAnalyzer implements TopicEditorialAnalyzer
                 'reasons' => $stringList,
                 'metadata' => [
                     'type' => 'object',
-                    'additionalProperties' => true,
+                    'additionalProperties' => false,
+                    'required' => ['schema_version'],
+                    'properties' => [
+                        'schema_version' => ['type' => 'string'],
+                    ],
                 ],
             ],
         ];
