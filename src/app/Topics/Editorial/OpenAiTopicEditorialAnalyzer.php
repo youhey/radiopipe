@@ -146,6 +146,9 @@ class OpenAiTopicEditorialAnalyzer implements TopicEditorialAnalyzer
             'Do not treat uncertain or partial source material as confirmed fact.',
             'Do not make investment, medical, legal, or safety advice.',
             'Do not joke about disasters, crimes, deaths, abuse, or serious harm.',
+            'All score fields must be integers from 0 to 100. Do not use a 1-10 scale.',
+            'Use 0 for no value, 50 for neutral/moderate, and 100 for maximum value.',
+            'This applies to editorial_score, every field under scores, and duplicate.confidence when duplicate.confidence is not null.',
             'Choose status from pending, skipped_low_value, skipped_duplicate, skipped_uncertain, skipped_sensitive.',
             'pending means the topic may proceed to later Scenario Topic Selection; it does not mean used_in_scenario.',
             'Return only structured JSON matching the schema.',
@@ -319,7 +322,7 @@ class OpenAiTopicEditorialAnalyzer implements TopicEditorialAnalyzer
 
             return new TopicEditorialEvaluation(
                 status: $status,
-                editorialScore: $this->intValue($payload, 'editorial_score'),
+                editorialScore: $this->scoreValue($payload, 'editorial_score', 'editorial_score'),
                 localized: $this->localizedFromArray($this->arrayValue($payload, 'localized')),
                 scores: $this->scoresFromArray($this->arrayValue($payload, 'scores')),
                 flags: $this->flagsFromArray($this->arrayValue($payload, 'flags')),
@@ -351,12 +354,12 @@ class OpenAiTopicEditorialAnalyzer implements TopicEditorialAnalyzer
     private function scoresFromArray(array $payload): TopicEditorialScores
     {
         return new TopicEditorialScores(
-            preference: $this->intValue($payload, 'preference'),
-            generalImportance: $this->intValue($payload, 'general_importance'),
-            freshness: $this->intValue($payload, 'freshness'),
-            certainty: $this->intValue($payload, 'certainty'),
-            scenarioFitness: $this->intValue($payload, 'scenario_fitness'),
-            flowFlexibility: $this->intValue($payload, 'flow_flexibility'),
+            preference: $this->scoreValue($payload, 'preference', 'scores.preference'),
+            generalImportance: $this->scoreValue($payload, 'general_importance', 'scores.general_importance'),
+            freshness: $this->scoreValue($payload, 'freshness', 'scores.freshness'),
+            certainty: $this->scoreValue($payload, 'certainty', 'scores.certainty'),
+            scenarioFitness: $this->scoreValue($payload, 'scenario_fitness', 'scores.scenario_fitness'),
+            flowFlexibility: $this->scoreValue($payload, 'flow_flexibility', 'scores.flow_flexibility'),
         );
     }
 
@@ -381,7 +384,7 @@ class OpenAiTopicEditorialAnalyzer implements TopicEditorialAnalyzer
             canonicalKey: $this->nullableStringValue($payload, 'canonical_key'),
             similarTopicIds: $this->stringListValue($payload, 'similar_topic_ids'),
             duplicateOf: $this->nullableStringValue($payload, 'duplicate_of'),
-            confidence: $this->nullableIntValue($payload, 'confidence'),
+            confidence: $this->nullableScoreValue($payload, 'confidence', 'duplicate.confidence'),
             reason: $this->nullableStringValue($payload, 'reason'),
         );
     }
@@ -430,12 +433,12 @@ class OpenAiTopicEditorialAnalyzer implements TopicEditorialAnalyzer
     /**
      * @param array<string, mixed> $payload
      */
-    private function intValue(array $payload, string $key): int
+    private function scoreValue(array $payload, string $key, string $field): int
     {
         $value = $payload[$key] ?? null;
 
-        if (! is_int($value)) {
-            throw TopicEditorialAnalyzerException::invalidResponse('openai');
+        if (! is_int($value) || $value < 0 || $value > 100) {
+            throw TopicEditorialAnalyzerException::invalidScore('openai', $field);
         }
 
         return $value;
@@ -444,12 +447,16 @@ class OpenAiTopicEditorialAnalyzer implements TopicEditorialAnalyzer
     /**
      * @param array<string, mixed> $payload
      */
-    private function nullableIntValue(array $payload, string $key): ?int
+    private function nullableScoreValue(array $payload, string $key, string $field): ?int
     {
         $value = $payload[$key] ?? null;
 
-        if ($value !== null && ! is_int($value)) {
-            throw TopicEditorialAnalyzerException::invalidResponse('openai');
+        if ($value === null) {
+            return null;
+        }
+
+        if (! is_int($value) || $value < 0 || $value > 100) {
+            throw TopicEditorialAnalyzerException::invalidScore('openai', $field);
         }
 
         return $value;

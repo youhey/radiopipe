@@ -21,6 +21,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Artisan;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
+use RuntimeException;
 use SplFileInfo;
 use Tests\TestCase;
 
@@ -127,6 +128,24 @@ class TopicsDebugCommandTest extends TestCase
         self::assertSame(['upstream:1'], $editorialAnalyzer->topicIds);
     }
 
+    public function testEditorialAnalyzerFailureKeepsEditorialNullAndRecordsError(): void
+    {
+        $this->bindPipeline(editorialAnalyzer: new FailingTopicEditorialAnalyzer());
+
+        self::assertSame(1, Artisan::call('radiopipe:topics:debug'));
+
+        $output = $this->jsonOutput();
+        $items = $this->listValue($output, 'items');
+        $first = $this->arrayValue($items, 0);
+        $errors = $this->listValue($output, 'errors');
+        $error = $this->arrayValue($errors, 0);
+
+        self::assertNull($first['editorial']);
+        self::assertSame('editorial', $error['stage']);
+        self::assertSame('upstream:1', $error['topic_id']);
+        self::assertSame('score range validation failed', $error['message']);
+    }
+
     public function testItDoesNotWriteFiles(): void
     {
         $before = $this->trackedFileList();
@@ -140,7 +159,7 @@ class TopicsDebugCommandTest extends TestCase
     /**
      * @param list<UpstreamArticleItem>|null $items
      */
-    private function bindPipeline(?RecordingUpstreamProvider $upstreamProvider = null, ?RecordingTopicEditorialAnalyzer $editorialAnalyzer = null, ?array $items = null): void
+    private function bindPipeline(?RecordingUpstreamProvider $upstreamProvider = null, ?TopicEditorialAnalyzer $editorialAnalyzer = null, ?array $items = null): void
     {
         $this->app->instance(UpstreamProvider::class, $upstreamProvider ?? new RecordingUpstreamProvider($items ?? [
             $this->upstreamItem(1),
@@ -387,5 +406,16 @@ class RecordingTopicEditorialAnalyzer implements TopicEditorialAnalyzer
                 'driver' => 'fixture',
             ],
         );
+    }
+}
+
+/**
+ * @internal
+ */
+class FailingTopicEditorialAnalyzer implements TopicEditorialAnalyzer
+{
+    public function analyze(TopicDraft $topicDraft): TopicEditorialEvaluation
+    {
+        throw new RuntimeException('score range validation failed');
     }
 }

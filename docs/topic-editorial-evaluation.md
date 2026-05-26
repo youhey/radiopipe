@@ -130,6 +130,9 @@ selected_not_used
 ## Scores
 
 Scores are `0..100` integers.
+Use `0` for no or lowest value, `50` for neutral or moderate value, and `100` for maximum or highest value.
+Analyzer output that uses invalid score types or values outside `0..100` should fail validation instead of being normalized.
+For example, the implementation must not automatically convert a possible `1..10` score such as `7` into `70`.
 
 | Score | Meaning |
 |---|---|

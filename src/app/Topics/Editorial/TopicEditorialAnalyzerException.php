@@ -42,6 +42,14 @@ class TopicEditorialAnalyzerException extends RuntimeException
     }
 
     /**
+     * analyzer response の score が期待する 0-100 integer ではない場合の例外を作成します。
+     */
+    public static function invalidScore(string $driver, string $field): self
+    {
+        return new self("Topic editorial analyzer [{$driver}] returned invalid score [{$field}]; expected integer 0..100.");
+    }
+
+    /**
      * OpenAI のエラー詳細をログ向けに一行へ整えます。
      */
     private static function normalizeDetail(string $value): string

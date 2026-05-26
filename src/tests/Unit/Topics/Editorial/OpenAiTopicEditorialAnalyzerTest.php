@@ -52,6 +52,10 @@ class OpenAiTopicEditorialAnalyzerTest extends TestCase
                 && is_array($metadata)
                 && ($metadata['additionalProperties'] ?? null) === false
                 && is_string($instructions)
+                && str_contains($instructions, 'All score fields must be integers from 0 to 100')
+                && str_contains($instructions, 'Do not use a 1-10 scale')
+                && str_contains($instructions, 'Use 0 for no value, 50 for neutral/moderate, and 100 for maximum value')
+                && str_contains($instructions, 'duplicate.confidence')
                 && str_contains($instructions, 'Return only structured JSON');
         });
     }
@@ -83,6 +87,60 @@ class OpenAiTopicEditorialAnalyzerTest extends TestCase
         ]);
 
         $this->expectException(TopicEditorialAnalyzerException::class);
+        $this->expectExceptionMessage('invalid score [scores.certainty]');
+
+        $this->analyzer()->analyze($this->draft());
+    }
+
+    public function testItDoesNotNormalizeNestedScoresThatLookLikeOneToTenScale(): void
+    {
+        $payload = $this->validEvaluationPayload();
+        $scores = $payload['scores'];
+        self::assertIsArray($scores);
+        $scores['preference'] = 4;
+        $payload['scores'] = $scores;
+
+        Http::fake([
+            'https://api.openai.com/v1/responses' => Http::response($this->openAiResponse($payload), 200),
+        ]);
+
+        $evaluation = $this->analyzer()->analyze($this->draft());
+
+        self::assertSame(4, $evaluation->scores->preference);
+    }
+
+    public function testItRejectsInvalidScoreTypes(): void
+    {
+        $payload = $this->validEvaluationPayload();
+        $scores = $payload['scores'];
+        self::assertIsArray($scores);
+        $scores['freshness'] = '80';
+        $payload['scores'] = $scores;
+
+        Http::fake([
+            'https://api.openai.com/v1/responses' => Http::response($this->openAiResponse($payload), 200),
+        ]);
+
+        $this->expectException(TopicEditorialAnalyzerException::class);
+        $this->expectExceptionMessage('invalid score [scores.freshness]');
+
+        $this->analyzer()->analyze($this->draft());
+    }
+
+    public function testItRejectsInvalidDuplicateConfidence(): void
+    {
+        $payload = $this->validEvaluationPayload();
+        $duplicate = $payload['duplicate'];
+        self::assertIsArray($duplicate);
+        $duplicate['confidence'] = 101;
+        $payload['duplicate'] = $duplicate;
+
+        Http::fake([
+            'https://api.openai.com/v1/responses' => Http::response($this->openAiResponse($payload), 200),
+        ]);
+
+        $this->expectException(TopicEditorialAnalyzerException::class);
+        $this->expectExceptionMessage('invalid score [duplicate.confidence]');
 
         $this->analyzer()->analyze($this->draft());
     }
