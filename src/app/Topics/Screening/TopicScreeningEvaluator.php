@@ -178,7 +178,7 @@ class TopicScreeningEvaluator
     {
         $contentType = $draft->contentType ?? 'unknown';
         $map = $this->intMapConfig('radiopipe.topic_screening.content_type_scores', []);
-        $score = $map[$contentType] ?? $map['unknown'] ?? 45;
+        $score = $map[$contentType] ?? $map['unknown'] ?? 50;
 
         if ($score >= 75) {
             $reasons[] = 'content type is useful';

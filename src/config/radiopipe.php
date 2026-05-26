@@ -34,21 +34,9 @@ return [
             2 => 30,
             1 => 10,
         ],
+        // @todo Provisional until digestpipe defines and enforces a stable content_type taxonomy.
         'content_type_scores' => [
-            'research_article' => 85,
-            'technical_article' => 85,
-            'data_analysis_article' => 85,
-            'technical_blog_post' => 80,
-            'news_article' => 70,
-            'news' => 70,
-            'opinion_essay' => 55,
-            'personal_blog_post' => 55,
-            'project_page' => 50,
-            'landing_page' => 25,
-            'news_article_headline_only' => 20,
-            'support_question' => 20,
-            'privacy_policy' => 10,
-            'unknown' => 45,
+            'unknown' => 50,
         ],
         'penalties' => [
             'limitation_keyword' => 30,

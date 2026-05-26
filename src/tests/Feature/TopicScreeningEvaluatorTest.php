@@ -19,7 +19,7 @@ class TopicScreeningEvaluatorTest extends TestCase
         $evaluation = $this->evaluate($this->draft());
 
         self::assertSame(TopicScreeningStatus::Passed, $evaluation->screeningStatus);
-        self::assertSame(95, $evaluation->screeningScore);
+        self::assertSame(90, $evaluation->screeningScore);
         self::assertFalse($evaluation->flags['is_duplicate']);
         self::assertFalse($evaluation->flags['is_uncertain']);
         self::assertFalse($evaluation->flags['is_sensitive']);
@@ -110,14 +110,36 @@ class TopicScreeningEvaluatorTest extends TestCase
         self::assertContains('digestpipe confidence is low', $evaluation->reasons);
     }
 
-    public function testWeakContentTypeLowersScore(): void
+    public function testFreeFormContentTypesUseNeutralUnknownScoreByDefault(): void
     {
+        foreach (['news/article', 'news_report', 'blog post', 'how-to', 'opinion/essay'] as $contentType) {
+            $evaluation = $this->evaluate($this->draft(contentType: $contentType));
+
+            self::assertSame(50, $evaluation->signals['content_type_score']);
+            self::assertNotContains('content type is useful', $evaluation->reasons);
+            self::assertNotContains('content type is weak', $evaluation->reasons);
+        }
+    }
+
+    public function testExplicitlyConfiguredContentTypeScoresStillWork(): void
+    {
+        config([
+            'radiopipe.topic_screening.content_type_scores' => [
+                'technical_article' => 85,
+                'landing_page' => 25,
+                'unknown' => 50,
+            ],
+        ]);
+
         $strong = $this->evaluate($this->draft(contentType: 'technical_article'));
         $weak = $this->evaluate($this->draft(contentType: 'landing_page'));
+        $freeForm = $this->evaluate($this->draft(contentType: 'news/article'));
 
         self::assertSame(85, $strong->signals['content_type_score']);
         self::assertSame(25, $weak->signals['content_type_score']);
+        self::assertSame(50, $freeForm->signals['content_type_score']);
         self::assertLessThan($strong->screeningScore, $weak->screeningScore);
+        self::assertContains('content type is useful', $strong->reasons);
         self::assertContains('content type is weak', $weak->reasons);
     }
 
@@ -212,7 +234,7 @@ class TopicScreeningEvaluatorTest extends TestCase
         self::assertSame(10, $evaluation->signals['freshness_score']);
         self::assertSame(40, $evaluation->signals['upstream_importance_score']);
         self::assertSame(40, $evaluation->signals['upstream_confidence_score']);
-        self::assertSame(45, $evaluation->signals['content_type_score']);
+        self::assertSame(50, $evaluation->signals['content_type_score']);
         self::assertFalse($evaluation->flags['is_duplicate']);
         self::assertFalse($evaluation->flags['is_sensitive']);
     }
@@ -223,13 +245,13 @@ class TopicScreeningEvaluatorTest extends TestCase
 
         self::assertSame([
             'screening_status' => 'passed',
-            'screening_score' => 95,
+            'screening_score' => 90,
             'signals' => [
                 'is_duplicate_url' => false,
                 'freshness_score' => 100,
                 'upstream_importance_score' => 80,
                 'upstream_confidence_score' => 96,
-                'content_type_score' => 85,
+                'content_type_score' => 50,
                 'limitation_penalty' => 0,
                 'selection_bonus' => 5,
             ],
@@ -242,7 +264,6 @@ class TopicScreeningEvaluatorTest extends TestCase
                 'article is fresh',
                 'digestpipe importance is high',
                 'source confidence is high',
-                'content type is useful',
                 'upstream selection status is selected',
             ],
         ], $evaluation->toArray());

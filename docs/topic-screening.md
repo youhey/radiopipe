@@ -96,28 +96,21 @@ upstream_confidence_score = round(confidence * 100)
 
 ### Content Type
 
-`content_type` は config の `radiopipe.topic_screening.content_type_scores` で管理します。
+`content_type` は現在、upstream から渡される provisional metadata として扱います。
+digestpipe はまだ stable な content type taxonomy を定義・強制していないため、radiopipe は既定では upstream の free-form `content_type` を正規化しません。
+
+radiopipe は `radiopipe.topic_screening.content_type_scores` に明示設定された値だけを個別スコアとして扱い、それ以外の upstream content type はすべて `unknown` と同じ扱いにします。
 
 現在の既定値:
 
 | `content_type` | `content_type_score` |
 |---|---:|
-| `research_article` | 85 |
-| `technical_article` | 85 |
-| `data_analysis_article` | 85 |
-| `technical_blog_post` | 80 |
-| `news_article` | 70 |
-| `news` | 70 |
-| `opinion_essay` | 55 |
-| `personal_blog_post` | 55 |
-| `project_page` | 50 |
-| `landing_page` | 25 |
-| `news_article_headline_only` | 20 |
-| `support_question` | 20 |
-| `privacy_policy` | 10 |
-| `unknown` | 45 |
+| `unknown` | 50 |
 
 未定義の `content_type` は `unknown` と同じ扱いです。
+例えば `news/article`、`news_report`、`blog post`、`how-to`、`opinion/essay` のような値も、明示設定がない限り `50` になります。
+
+将来的には、digestpipe 側で stable な content type taxonomy が定義・強制された後に、この scoring map をその taxonomy と揃えます。
 
 ### Limitations
 
