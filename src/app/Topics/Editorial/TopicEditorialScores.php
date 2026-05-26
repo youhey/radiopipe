@@ -5,7 +5,7 @@ namespace App\Topics\Editorial;
 use InvalidArgumentException;
 
 /**
- * Topic Editorial Evaluation の score 群です。
+ * Topic Editorial Evaluation の score 群
  */
 class TopicEditorialScores
 {
@@ -29,6 +29,13 @@ class TopicEditorialScores
 
     /**
      * Constructor.
+     *
+     * @param int $preference
+     * @param int $generalImportance
+     * @param int $freshness
+     * @param int $certainty
+     * @param int $scenarioFitness
+     * @param int $flowFlexibility
      */
     public function __construct(
         int $preference,
@@ -47,7 +54,7 @@ class TopicEditorialScores
     }
 
     /**
-     * JSON 出力向けの配列へ変換します。
+     * JSON 出力向けの連想配列を返す
      *
      * @return array{
      *     preference: int,

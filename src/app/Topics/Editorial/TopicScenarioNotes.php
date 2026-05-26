@@ -3,7 +3,7 @@
 namespace App\Topics\Editorial;
 
 /**
- * 後続 Scenario 選択・執筆向けの topic hint です。
+ * 後続 Scenario 選択・執筆向けの Topic Hint
  */
 class TopicScenarioNotes
 {
@@ -22,6 +22,9 @@ class TopicScenarioNotes
     /**
      * Constructor.
      *
+     * @param string|null $suggestedRole
+     * @param string|null $tone
+     * @param string|null $transitionHint
      * @param list<string> $avoid
      */
     public function __construct(?string $suggestedRole, ?string $tone, ?string $transitionHint, array $avoid)
@@ -33,7 +36,7 @@ class TopicScenarioNotes
     }
 
     /**
-     * JSON 出力向けの配列へ変換します。
+     * JSON 出力向けの連想配列を返す
      *
      * @return array{
      *     suggested_role: string|null,

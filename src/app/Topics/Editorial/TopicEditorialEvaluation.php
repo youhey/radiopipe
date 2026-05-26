@@ -5,7 +5,7 @@ namespace App\Topics\Editorial;
 use InvalidArgumentException;
 
 /**
- * Topic Editorial Evaluation の構造化結果です。
+ * Topic Editorial Evaluation の構造化結果
  */
 class TopicEditorialEvaluation
 {
@@ -39,6 +39,13 @@ class TopicEditorialEvaluation
     /**
      * Constructor.
      *
+     * @param TopicEditorialStatus $status
+     * @param int $editorialScore
+     * @param TopicLocalizedText $localized
+     * @param TopicEditorialScores $scores
+     * @param TopicEditorialFlags $flags
+     * @param TopicDuplicateAssessment $duplicate
+     * @param TopicScenarioNotes $scenarioNotes
      * @param list<string> $reasons
      * @param array<string, mixed> $metadata
      */
@@ -65,7 +72,7 @@ class TopicEditorialEvaluation
     }
 
     /**
-     * JSON 出力向けの配列へ変換します。
+     * JSON 出力向けの連想配列を返す
      *
      * @return array{
      *     status: string,

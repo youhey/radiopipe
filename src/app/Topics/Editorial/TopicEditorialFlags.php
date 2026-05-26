@@ -3,7 +3,7 @@
 namespace App\Topics\Editorial;
 
 /**
- * Topic Editorial Evaluation の判定 flag 群です。
+ * Topic Editorial Evaluation の判定 Flag 群
  */
 class TopicEditorialFlags
 {
@@ -18,6 +18,10 @@ class TopicEditorialFlags
 
     /**
      * Constructor.
+     *
+     * @param bool $isDuplicateCandidate
+     * @param bool $isUncertain
+     * @param bool $isSensitive
      */
     public function __construct(bool $isDuplicateCandidate, bool $isUncertain, bool $isSensitive)
     {
@@ -27,7 +31,7 @@ class TopicEditorialFlags
     }
 
     /**
-     * JSON 出力向けの配列へ変換します。
+     * JSON 出力向けの連想配列を返す
      *
      * @return array{is_duplicate_candidate: bool, is_uncertain: bool, is_sensitive: bool}
      */

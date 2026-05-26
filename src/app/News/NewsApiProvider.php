@@ -3,10 +3,11 @@
 namespace App\News;
 
 use Carbon\CarbonImmutable;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 
 /**
- * NewsAPI.org の top-headlines endpoint から一般ニュースを取得する provider です。
+ * NewsAPI.org の Top-headlines Endpoint から一般ニュースを取得する Provider
  */
 class NewsApiProvider implements NewsProvider
 {
@@ -20,6 +21,11 @@ class NewsApiProvider implements NewsProvider
 
     /**
      * Constructor.
+     *
+     * @param string $baseUrl
+     * @param string|null $apiKey
+     * @param int $timeout
+     * @param int $maxRetries
      */
     public function __construct(string $baseUrl, ?string $apiKey, int $timeout, int $maxRetries)
     {
@@ -30,9 +36,13 @@ class NewsApiProvider implements NewsProvider
     }
 
     /**
-     * NewsAPI response を内部のニュース形式へ正規化します。
+     * NewsAPI のレスポンスを内部データ構造へ正規化
+     *
+     * @param NewsQuery $query
      *
      * @return list<NewsItem>
+     *
+     * @throws ConnectionException
      */
     public function fetch(NewsQuery $query): array
     {
@@ -109,7 +119,11 @@ class NewsApiProvider implements NewsProvider
     }
 
     /**
-     * 空ではない文字列値を返します。
+     * 空ではない文字列値を返す
+     *
+     * @param mixed $value
+     *
+     * @return string|null
      */
     private function nonEmptyString(mixed $value): ?string
     {
@@ -121,7 +135,11 @@ class NewsApiProvider implements NewsProvider
     }
 
     /**
-     * provider の概要テキストを内部 summary として整えます。
+     * 概要テキストを内部要約文として整えて返す
+     *
+     * @param mixed $value
+     *
+     * @return string|null
      */
     private function sanitizeSummary(mixed $value): ?string
     {
@@ -135,7 +153,11 @@ class NewsApiProvider implements NewsProvider
     }
 
     /**
-     * provider の時刻文字列を CarbonImmutable へ変換します。
+     * 時刻文字列を CarbonImmutable へ変換して返す
+     *
+     * @param mixed $value
+     *
+     * @return CarbonImmutable|null
      */
     private function parseTime(mixed $value): ?CarbonImmutable
     {

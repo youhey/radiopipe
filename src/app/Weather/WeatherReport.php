@@ -5,7 +5,7 @@ namespace App\Weather;
 use Carbon\CarbonImmutable;
 
 /**
- * provider response から正規化した天気情報です。
+ * Provider Response から正規化した天気情報
  */
 class WeatherReport
 {
@@ -56,6 +56,22 @@ class WeatherReport
 
     /**
      * Constructor.
+     *
+     * @param string $providerName
+     * @param float $latitude
+     * @param float $longitude
+     * @param string|null $locationName
+     * @param string|null $timezone
+     * @param float|null $temperature
+     * @param float|null $apparentTemperature
+     * @param float|null $precipitationAmount
+     * @param float|null $rainAmount
+     * @param float|null $precipitationProbability
+     * @param int|string|null $weatherConditionCode
+     * @param float|null $windSpeed
+     * @param CarbonImmutable|null $reportedAt
+     * @param CarbonImmutable $fetchedAt
+     * @param string|null $sourceLabel
      */
     public function __construct(
         string $providerName,

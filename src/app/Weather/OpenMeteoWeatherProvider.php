@@ -3,10 +3,11 @@
 namespace App\Weather;
 
 use Carbon\CarbonImmutable;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 
 /**
- * Open-Meteo forecast API から現在天気を取得する provider です。
+ * Open-Meteo Forecast API から現在天気を取得する Provider
  */
 class OpenMeteoWeatherProvider implements WeatherProvider
 {
@@ -18,6 +19,10 @@ class OpenMeteoWeatherProvider implements WeatherProvider
 
     /**
      * Constructor.
+     *
+     * @param string $baseUrl
+     * @param int $timeout
+     * @param int $maxRetries
      */
     public function __construct(string $baseUrl, int $timeout, int $maxRetries)
     {
@@ -27,7 +32,13 @@ class OpenMeteoWeatherProvider implements WeatherProvider
     }
 
     /**
-     * Open-Meteo response を内部の天気形式へ正規化します。
+     * Open-Meteo Response を内部の天気形式へ正規化して返す
+     *
+     * @param WeatherQuery $query
+     *
+     * @return WeatherReport
+     *
+     * @throws ConnectionException
      */
     public function current(WeatherQuery $query): WeatherReport
     {
@@ -85,7 +96,11 @@ class OpenMeteoWeatherProvider implements WeatherProvider
     }
 
     /**
-     * 数値として扱える provider 値を float に正規化します。
+     * 数値として扱える provider 値を float に正規化して返す
+     *
+     * @param mixed $value
+     *
+     * @return float|null
      */
     private function floatValue(mixed $value): ?float
     {
@@ -101,7 +116,11 @@ class OpenMeteoWeatherProvider implements WeatherProvider
     }
 
     /**
-     * 空文字ではない文字列値を返します。
+     * 空文字ではない文字列値を返す
+     *
+     * @param mixed $value
+     *
+     * @return string|null
      */
     private function stringValue(mixed $value): ?string
     {
@@ -113,7 +132,11 @@ class OpenMeteoWeatherProvider implements WeatherProvider
     }
 
     /**
-     * Open-Meteo の weather_code を整数に正規化します。
+     * Open-Meteo の weather_code を整数に正規化して返す
+     *
+     * @param mixed $value
+     *
+     * @return int|null
      */
     private function conditionCode(mixed $value): ?int
     {
@@ -129,7 +152,12 @@ class OpenMeteoWeatherProvider implements WeatherProvider
     }
 
     /**
-     * provider の時刻文字列を CarbonImmutable へ変換します。
+     * 時刻文字列を CarbonImmutable へ変換して返す
+     *
+     * @param mixed $value
+     * @param string|null $timezone
+     *
+     * @return CarbonImmutable|null
      */
     private function reportedAt(mixed $value, ?string $timezone): ?CarbonImmutable
     {

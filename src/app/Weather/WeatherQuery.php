@@ -5,7 +5,7 @@ namespace App\Weather;
 use InvalidArgumentException;
 
 /**
- * 天気取得対象の地点と表示用メタデータです。
+ * 天気取得対象の地点と表示用メタデータ
  */
 class WeatherQuery
 {
@@ -18,11 +18,16 @@ class WeatherQuery
     /** @var string|null 表示用の地点名 */
     public ?string $locationName;
 
-    /** @var string|null provider に渡す timezone */
+    /** @var string|null Provider に渡す Timezone */
     public ?string $timezone;
 
     /**
      * Constructor.
+     *
+     * @param float $latitude
+     * @param float $longitude
+     * @param string|null $locationName
+     * @param string|null $timezone
      */
     public function __construct(
         float $latitude,

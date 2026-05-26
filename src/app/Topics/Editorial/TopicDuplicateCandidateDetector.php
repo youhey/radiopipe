@@ -5,7 +5,7 @@ namespace App\Topics\Editorial;
 use App\Topics\TopicDraft;
 
 /**
- * TopicDraft 群から obvious な duplicate candidate を deterministic に検出します。
+ * TopicDraft 群から Obvious な Duplicate Candidate を Deterministic に検出
  */
 class TopicDuplicateCandidateDetector
 {
@@ -14,7 +14,7 @@ class TopicDuplicateCandidateDetector
     public const CANDIDATE_SCORE = 70;
 
     /**
-     * topic id ごとに duplicate candidate topic id を返します。
+     * Topic ID ごとに Duplicate Candidate Topic ID を返す
      *
      * @param array<int, TopicDraft> $topics
      *
@@ -52,7 +52,12 @@ class TopicDuplicateCandidateDetector
     }
 
     /**
-     * 2 つの TopicDraft の duplicate candidate score を算出します。
+     * 2 つの TopicDraft の Duplicate Candidate Score を算出
+     *
+     * @param TopicDraft $topic
+     * @param TopicDraft $otherTopic
+     *
+     * @return TopicDuplicateCandidateAssessment
      */
     public function assess(TopicDraft $topic, TopicDraft $otherTopic): TopicDuplicateCandidateAssessment
     {
@@ -112,7 +117,11 @@ class TopicDuplicateCandidateDetector
     }
 
     /**
-     * TopicDraft から deterministic canonical key を作成します。
+     * TopicDraft から Deterministic Canonical Key を作成して返す
+     *
+     * @param TopicDraft $topic
+     *
+     * @return string|null
      */
     public function canonicalKey(TopicDraft $topic): ?string
     {

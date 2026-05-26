@@ -5,12 +5,12 @@ namespace App\Topics\Editorial;
 use RuntimeException;
 
 /**
- * Topic Editorial Analyzer の取得・正規化失敗を表します。
+ * Topic Editorial Analyzer の取得・正規化失敗を表現する例外
  */
 class TopicEditorialAnalyzerException extends RuntimeException
 {
     /**
-     * HTTP response が失敗した場合の例外を作成します。
+     * HTTP Response が失敗した場合の例外を作成して返す
      *
      * @param array{message?: string, type?: string, code?: string} $error
      */
@@ -34,7 +34,7 @@ class TopicEditorialAnalyzerException extends RuntimeException
     }
 
     /**
-     * analyzer response が期待した形式ではない場合の例外を作成します。
+     * Analyzer Response が期待した形式ではない場合の例外を作成して返す
      */
     public static function invalidResponse(string $driver): self
     {
@@ -42,7 +42,7 @@ class TopicEditorialAnalyzerException extends RuntimeException
     }
 
     /**
-     * analyzer response の score が期待する 0-100 integer ではない場合の例外を作成します。
+     * Analyzer Response の score が期待する 0-100 integer ではない場合の例外を作成して返す
      */
     public static function invalidScore(string $driver, string $field): self
     {
@@ -50,7 +50,7 @@ class TopicEditorialAnalyzerException extends RuntimeException
     }
 
     /**
-     * OpenAI のエラー詳細をログ向けに一行へ整えます。
+     * OpenAI のエラー詳細をログ向けに一行へ整えて返す
      */
     private static function normalizeDetail(string $value): string
     {

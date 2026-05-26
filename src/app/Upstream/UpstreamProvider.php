@@ -3,12 +3,12 @@
 namespace App\Upstream;
 
 /**
- * upstream digest provider から完了済み記事項目を取得します。
+ * Upstream Items 取得のインタフェース
  */
 interface UpstreamProvider
 {
     /**
-     * 指定条件に合う upstream 記事項目を取得します。
+     * 指定条件に合う Upstream Items を取得して返す
      *
      * @return list<UpstreamArticleItem>
      *

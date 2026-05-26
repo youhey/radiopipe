@@ -15,7 +15,7 @@ use JsonException;
 use Throwable;
 
 /**
- * topic processing pipeline の中間データを JSON で出力する debug command です。
+ * 中間データを JSON で出力するデバッグコマンド
  */
 class TopicsDebugCommand extends Command
 {
@@ -52,7 +52,7 @@ class TopicsDebugCommand extends Command
     }
 
     /**
-     * configured topic pipeline を実行して JSON を stdout に出力します。
+     * Configured Topic Pipeline を実行して JSON を標準出力へ出力する
      */
     public function handle(): int
     {

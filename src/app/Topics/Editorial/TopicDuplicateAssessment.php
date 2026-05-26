@@ -5,7 +5,7 @@ namespace App\Topics\Editorial;
 use InvalidArgumentException;
 
 /**
- * Topic の semantic duplicate 候補情報です。
+ * Topic の Semantic Duplicate 候補情報
  */
 class TopicDuplicateAssessment
 {
@@ -27,7 +27,11 @@ class TopicDuplicateAssessment
     /**
      * Constructor.
      *
+     * @param string|null $canonicalKey
      * @param list<string> $similarTopicIds
+     * @param string|null $duplicateOf
+     * @param int|null $confidence
+     * @param string|null $reason
      */
     public function __construct(
         ?string $canonicalKey,
@@ -44,7 +48,7 @@ class TopicDuplicateAssessment
     }
 
     /**
-     * JSON 出力向けの配列へ変換します。
+     * JSON 出力向けの連想配列を返す
      *
      * @return array{
      *     canonical_key: string|null,

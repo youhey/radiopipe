@@ -3,7 +3,7 @@
 namespace App\Topics\Screening;
 
 /**
- * TopicDraft の deterministic な Stage 1 screening 結果です。
+ * TopicDraft の deterministic な Stage 1 screening 結果
  */
 class TopicScreeningEvaluation
 {
@@ -25,6 +25,8 @@ class TopicScreeningEvaluation
     /**
      * Constructor.
      *
+     * @param TopicScreeningStatus $screeningStatus
+     * @param int $screeningScore
      * @param array<string, bool|float|int|string|null> $signals
      * @param array{is_duplicate: bool, is_uncertain: bool, is_sensitive: bool} $flags
      * @param list<string> $reasons
@@ -44,7 +46,7 @@ class TopicScreeningEvaluation
     }
 
     /**
-     * JSON 出力向けの配列へ変換します。
+     * JSON 出力向けの連想配列を返す
      *
      * @return array{
      *     screening_status: string,

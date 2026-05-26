@@ -5,7 +5,7 @@ namespace App\Upstream;
 use Carbon\CarbonImmutable;
 
 /**
- * upstream 記事取得条件です。
+ * Upstream Item 取得条件
  */
 class UpstreamArticleQuery
 {
@@ -23,6 +23,11 @@ class UpstreamArticleQuery
 
     /**
      * Constructor.
+     *
+     * @param CarbonImmutable|null $from
+     * @param CarbonImmutable|null $to
+     * @param string|null $source
+     * @param int|null $limit
      */
     public function __construct(
         ?CarbonImmutable $from = null,
@@ -37,7 +42,7 @@ class UpstreamArticleQuery
     }
 
     /**
-     * API query parameter へ変換します。
+     * API query parameter へ変換して返す
      *
      * @return array{from?: string, to?: string, source?: string, limit?: int}
      */
@@ -52,7 +57,11 @@ class UpstreamArticleQuery
     }
 
     /**
-     * 空文字列を null として扱います。
+     * 空文字列を null 扱いで文字列を返す
+     *
+     * @param string|null $value
+     *
+     * @return string|null
      */
     private function blankToNull(?string $value): ?string
     {

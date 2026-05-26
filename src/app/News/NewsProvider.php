@@ -3,12 +3,12 @@
 namespace App\News;
 
 /**
- * 一般ニュース項目を取得して内部形式へ正規化する provider です。
+ * 一般ニュースを内部形式へ正規化する Provider
  */
 interface NewsProvider
 {
     /**
-     * 指定条件に合うニュース項目を取得します。
+     * 指定条件に合うニュースを取得して返す
      *
      * @return list<NewsItem>
      *

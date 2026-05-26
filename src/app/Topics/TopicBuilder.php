@@ -7,12 +7,16 @@ use Carbon\CarbonImmutable;
 use Throwable;
 
 /**
- * UpstreamArticleItem を TopicDraft へ変換します。
+ * Upstream Article Item から TopicDraft を作成
  */
 class TopicBuilder
 {
     /**
-     * upstream 記事から deterministic に TopicDraft を作成します。
+     * Upstream Item から deterministic に TopicDraft を作成して返す
+     *
+     * @param UpstreamArticleItem $item
+     *
+     * @return TopicDraft
      */
     public function build(UpstreamArticleItem $item): TopicDraft
     {
@@ -53,7 +57,9 @@ class TopicBuilder
     }
 
     /**
-     * object-like 配列値を取得します。
+     * object-like 配列値を返す
+     *
+     * @param mixed $value
      *
      * @return array<string, mixed>
      */
@@ -71,7 +77,11 @@ class TopicBuilder
     }
 
     /**
-     * 空ではない文字列値を取得します。
+     * 空ではない文字列値を返す
+     *
+     * @param mixed $value
+     *
+     * @return string|null
      */
     private function stringValue(mixed $value): ?string
     {
@@ -83,7 +93,9 @@ class TopicBuilder
     }
 
     /**
-     * 文字列配列を取得します。
+     * 文字列配列を返す
+     *
+     * @param mixed $value
      *
      * @return list<string>
      */
@@ -103,7 +115,11 @@ class TopicBuilder
     }
 
     /**
-     * importance 値を数値として取得します。
+     * importance 値を数値として返す
+     *
+     * @param mixed $value
+     *
+     * @return float|int|null
      */
     private function importance(mixed $value): float|int|null
     {
@@ -121,7 +137,11 @@ class TopicBuilder
     }
 
     /**
-     * float 値を取得します。
+     * float 値を返す
+     *
+     * @param mixed $value
+     *
+     * @return float|null
      */
     private function floatValue(mixed $value): ?float
     {
@@ -137,7 +157,11 @@ class TopicBuilder
     }
 
     /**
-     * int 値を取得します。
+     * int 値を返す
+     *
+     * @param mixed $value
+     *
+     * @return int|null
      */
     private function intValue(mixed $value): ?int
     {
@@ -153,7 +177,11 @@ class TopicBuilder
     }
 
     /**
-     * 日時文字列を CarbonImmutable へ変換します。
+     * 日時文字列を CarbonImmutable へ変換して返す
+     *
+     * @param mixed $value
+     *
+     * @return CarbonImmutable|null
      */
     private function dateTime(mixed $value): ?CarbonImmutable
     {

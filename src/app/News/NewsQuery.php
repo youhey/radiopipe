@@ -55,7 +55,11 @@ class NewsQuery
     }
 
     /**
-     * 空文字列を null として扱います。
+     * 空文字列は null 扱いで文字列を返す
+     *
+     * @param string|null $value
+     *
+     * @return string|null
      */
     private function blankToNull(?string $value): ?string
     {

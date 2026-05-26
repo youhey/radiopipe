@@ -3,7 +3,7 @@
 namespace App\Topics\Screening;
 
 /**
- * Stage 1 の topic screening status です。
+ * Stage 1 の Topic Screening Status
  */
 enum TopicScreeningStatus: string
 {

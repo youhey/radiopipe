@@ -3,13 +3,15 @@
 namespace App\Topics\Editorial;
 
 use App\Topics\TopicDraft;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use InvalidArgumentException;
+use JsonException;
 use ValueError;
 
 /**
- * OpenAI Responses API を使う Topic Editorial Analyzer です。
+ * OpenAI Responses API を使う Topic Editorial Analyzer
  */
 class OpenAiTopicEditorialAnalyzer implements TopicEditorialAnalyzer
 {
@@ -23,6 +25,11 @@ class OpenAiTopicEditorialAnalyzer implements TopicEditorialAnalyzer
 
     /**
      * Constructor.
+     *
+     * @param string|null $apiKey
+     * @param string $model
+     * @param int $timeout
+     * @param int $maxRetries
      */
     public function __construct(?string $apiKey, string $model, int $timeout, int $maxRetries)
     {
@@ -37,7 +44,14 @@ class OpenAiTopicEditorialAnalyzer implements TopicEditorialAnalyzer
     }
 
     /**
-     * TopicDraft を OpenAI により editorial evaluation として解析します。
+     * TopicDraft を OpenAI により Editorial Evaluation として解析
+     *
+     * @param TopicDraft $topicDraft
+     *
+     * @return TopicEditorialEvaluation
+     *
+     * @throws ConnectionException
+     * @throws JsonException
      */
     public function analyze(TopicDraft $topicDraft): TopicEditorialEvaluation
     {
@@ -72,7 +86,9 @@ class OpenAiTopicEditorialAnalyzer implements TopicEditorialAnalyzer
     }
 
     /**
-     * OpenAI error object から公開してよい最小限の詳細だけを取り出します。
+     * OpenAI Error Object から公開してよい最小限の詳細だけを取り出して返す
+     *
+     * @param Response $response
      *
      * @return array{message?: string, type?: string, code?: string}
      */
@@ -104,9 +120,13 @@ class OpenAiTopicEditorialAnalyzer implements TopicEditorialAnalyzer
     }
 
     /**
-     * Responses API request payload を作成します。
+     * Responses API request payload を作成して返す
+     *
+     * @param TopicDraft $topicDraft
      *
      * @return array<string, mixed>
+     *
+     * @throws JsonException
      */
     private function requestPayload(TopicDraft $topicDraft): array
     {

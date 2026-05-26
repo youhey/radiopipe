@@ -6,14 +6,18 @@ use App\Topics\TopicDraft;
 use Carbon\CarbonImmutable;
 
 /**
- * TopicDraft を低コストな deterministic screening で評価します。
+ * TopicDraft を低コストな deterministic screening で評価
  */
 class TopicScreeningEvaluator
 {
     /**
-     * TopicDraft を Stage 1 screening で評価します。
+     * TopicDraft を Stage 1 screening で評価
      *
+     * @param TopicDraft $draft
      * @param list<string> $seenUrls
+     * @param CarbonImmutable|null $now
+     *
+     * @return TopicScreeningEvaluation
      */
     public function evaluate(TopicDraft $draft, array $seenUrls = [], ?CarbonImmutable $now = null): TopicScreeningEvaluation
     {
@@ -76,9 +80,13 @@ class TopicScreeningEvaluator
     }
 
     /**
-     * published_at から freshness score を算出します。
+     * published_at から freshness score を算出して返す
      *
+     * @param TopicDraft $draft
+     * @param CarbonImmutable $now
      * @param list<string> $reasons
+     *
+     * @return int
      */
     private function freshnessScore(TopicDraft $draft, CarbonImmutable $now, array &$reasons): int
     {
@@ -118,9 +126,12 @@ class TopicScreeningEvaluator
     }
 
     /**
-     * digestpipe importance を trusted scale から score へ変換します。
+     * Digestpipe Importance を Trusted Scale から score へ変換して返す
      *
+     * @param TopicDraft $draft
      * @param list<string> $reasons
+     *
+     * @return int
      */
     private function importanceScore(TopicDraft $draft, array &$reasons): int
     {
@@ -148,9 +159,12 @@ class TopicScreeningEvaluator
     }
 
     /**
-     * digestpipe confidence を trusted scale から score へ変換します。
+     * Digestpipe Confidence を Trusted Scale から score へ変換して返す
      *
+     * @param TopicDraft $draft
      * @param list<string> $reasons
+     *
+     * @return int
      */
     private function confidenceScore(TopicDraft $draft, array &$reasons): int
     {
@@ -170,7 +184,7 @@ class TopicScreeningEvaluator
     }
 
     /**
-     * content_type から score を算出します。
+     * content_type から score を算出して返す
      *
      * @param list<string> $reasons
      */
@@ -190,9 +204,12 @@ class TopicScreeningEvaluator
     }
 
     /**
-     * limitations text から penalty を算出します。
+     * Limitations Text から Penalty を算出して返す
      *
+     * @param TopicDraft $draft
      * @param list<string> $reasons
+     *
+     * @return int
      */
     private function limitationPenalty(TopicDraft $draft, array &$reasons): int
     {
@@ -214,9 +231,12 @@ class TopicScreeningEvaluator
     }
 
     /**
-     * upstream selection を弱い bounded signal として加算します。
+     * Upstream Selection を弱い Bounded Signal として加算
      *
+     * @param TopicDraft $draft
      * @param list<string> $reasons
+     *
+     * @return int
      */
     private function selectionBonus(TopicDraft $draft, array &$reasons): int
     {
@@ -244,9 +264,12 @@ class TopicScreeningEvaluator
     }
 
     /**
-     * 明確に sensitive な topic を判定します。
+     * 明確に Sensitive な Topic を判定
      *
+     * @param TopicDraft $draft
      * @param list<string> $reasons
+     *
+     * @return bool
      */
     private function isSensitive(TopicDraft $draft, array &$reasons): bool
     {
@@ -315,6 +338,7 @@ class TopicScreeningEvaluator
     }
 
     /**
+     * @param string $key
      * @param array<int|string, int> $default
      *
      * @return array<int|string, int>
@@ -343,6 +367,8 @@ class TopicScreeningEvaluator
     }
 
     /**
+     * @param string $key
+     *
      * @return list<string>
      */
     private function stringListConfig(string $key): array

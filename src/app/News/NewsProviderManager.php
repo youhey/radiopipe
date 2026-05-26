@@ -5,12 +5,16 @@ namespace App\News;
 use InvalidArgumentException;
 
 /**
- * 設定に基づいて news provider と既定 query を解決します。
+ * 設定に基づいて News Provider と既定 Query を解決
  */
 class NewsProviderManager
 {
     /**
-     * provider 名から news provider を解決します。
+     * Provider 名から News Provider を解決して返す
+     *
+     * @param string|null $driver
+     *
+     * @return NewsProvider
      */
     public function driver(?string $driver = null): NewsProvider
     {
@@ -33,7 +37,9 @@ class NewsProviderManager
     }
 
     /**
-     * 設定された既定条件の query を作成します。
+     * 設定された既定条件の Query を作成して返す
+     *
+     * @return NewsQuery
      */
     public function defaultQuery(): NewsQuery
     {
@@ -48,7 +54,9 @@ class NewsProviderManager
     }
 
     /**
-     * 設定済み provider でニュース項目を取得します。
+     * 設定済み Provider でニュースを取得して返す
+     *
+     * @param NewsQuery|null $query
      *
      * @return list<NewsItem>
      */
@@ -58,7 +66,12 @@ class NewsProviderManager
     }
 
     /**
-     * 文字列設定を取得します。
+     * 文字列設定を返す
+     *
+     * @param string $key
+     * @param string $default
+     *
+     * @return string
      */
     private function stringConfig(string $key, string $default): string
     {
@@ -72,7 +85,11 @@ class NewsProviderManager
     }
 
     /**
-     * nullable な文字列設定を取得します。
+     * Nullable な文字列設定を返す
+     *
+     * @param string $key
+     *
+     * @return string|null
      */
     private function nullableStringConfig(string $key): ?string
     {
@@ -86,7 +103,12 @@ class NewsProviderManager
     }
 
     /**
-     * 整数設定を取得します。
+     * 整数設定を返す
+     *
+     * @param string $key
+     * @param int $default
+     *
+     * @return int
      */
     private function intConfig(string $key, int $default): int
     {
@@ -100,7 +122,7 @@ class NewsProviderManager
     }
 
     /**
-     * RSS feed URL 設定を取得します。
+     * RSS feed URL 設定を返す
      *
      * @return list<string>
      */

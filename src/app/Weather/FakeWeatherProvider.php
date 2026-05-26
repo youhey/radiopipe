@@ -5,12 +5,16 @@ namespace App\Weather;
 use Carbon\CarbonImmutable;
 
 /**
- * テストとローカル開発用の固定天気 provider です。
+ * テスト用の固定天気 Provider
  */
 class FakeWeatherProvider implements WeatherProvider
 {
     /**
-     * 指定地点に対する deterministic な fake 天気を返します。
+     * 指定地点に対する Deterministic な Fake 天気を返す
+     *
+     * @param WeatherQuery $query
+     *
+     * @return WeatherReport
      */
     public function current(WeatherQuery $query): WeatherReport
     {

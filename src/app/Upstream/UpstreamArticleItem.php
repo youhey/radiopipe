@@ -5,7 +5,7 @@ namespace App\Upstream;
 use Carbon\CarbonImmutable;
 
 /**
- * upstream provider response から正規化した記事項目です。
+ * Upstream Item を正規化したオブジェクト
  */
 class UpstreamArticleItem
 {
@@ -63,7 +63,7 @@ class UpstreamArticleItem
     }
 
     /**
-     * JSON 出力向けの配列へ変換します。
+     * JSON 出力向けの連想配列を返す
      *
      * @return array{
      *     upstream_id: int|string,

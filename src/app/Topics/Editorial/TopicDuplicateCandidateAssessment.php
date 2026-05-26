@@ -21,7 +21,9 @@ class TopicDuplicateCandidateAssessment
     /**
      * Constructor.
      *
+     * @param int $duplicateScore
      * @param array<string, bool|int|string|null> $signals
+     * @param string|null $reason
      */
     public function __construct(int $duplicateScore, array $signals, ?string $reason)
     {
@@ -35,7 +37,11 @@ class TopicDuplicateCandidateAssessment
     }
 
     /**
-     * candidate threshold 以上かどうかを返します。
+     * Candidate Threshold 以上ならば TRUE を返す
+     *
+     * @param int $threshold
+     *
+     * @return bool
      */
     public function isCandidate(int $threshold = TopicDuplicateCandidateDetector::CANDIDATE_SCORE): bool
     {
@@ -43,7 +49,11 @@ class TopicDuplicateCandidateAssessment
     }
 
     /**
-     * strong duplicate threshold 以上かどうかを返します。
+     * Strong Duplicate Threshold 以上ならば TRUE を返す
+     *
+     * @param int $threshold
+     *
+     * @return bool
      */
     public function isStrongDuplicate(int $threshold = TopicDuplicateCandidateDetector::STRONG_DUPLICATE_SCORE): bool
     {
@@ -51,7 +61,7 @@ class TopicDuplicateCandidateAssessment
     }
 
     /**
-     * JSON 出力向けの配列へ変換します。
+     * JSON 出力向けの連想配列を返す
      *
      * @return array{duplicate_score: int, signals: array<string, bool|int|string|null>, reason: string|null}
      */

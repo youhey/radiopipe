@@ -3,12 +3,13 @@
 namespace App\News;
 
 use Carbon\CarbonImmutable;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use SimpleXMLElement;
 use Throwable;
 
 /**
- * 設定された RSS/Atom feed から一般ニュース項目を取得する provider です。
+ * 設定された RSS/Atom feed から一般ニュースを取得する Provider
  */
 class RssFeedProvider implements NewsProvider
 {
@@ -18,6 +19,9 @@ class RssFeedProvider implements NewsProvider
 
     /**
      * Constructor.
+     *
+     * @param int $timeout
+     * @param int $maxRetries
      */
     public function __construct(int $timeout, int $maxRetries)
     {
@@ -26,9 +30,13 @@ class RssFeedProvider implements NewsProvider
     }
 
     /**
-     * RSS/Atom feed item を内部のニュース形式へ正規化します。
+     * RSS/Atom feed item を内部のニュース形式へ正規化して返す
+     *
+     * @param NewsQuery $query
      *
      * @return list<NewsItem>
+     *
+     * @throws ConnectionException
      */
     public function fetch(NewsQuery $query): array
     {
@@ -55,7 +63,12 @@ class RssFeedProvider implements NewsProvider
     }
 
     /**
-     * XML feed body をニュース項目へ変換します。
+     * XML feed body をニュースデータへ変換して返す
+     *
+     * @param string $body
+     * @param string $feedUrl
+     * @param NewsQuery $query
+     * @param CarbonImmutable $fetchedAt
      *
      * @return list<NewsItem>
      */
@@ -86,7 +99,12 @@ class RssFeedProvider implements NewsProvider
     }
 
     /**
-     * RSS 2.0 item をニュース項目へ変換します。
+     * RSS 2.0 item をニュースデータへ変換して返す
+     *
+     * @param SimpleXMLElement $xml
+     * @param string $feedUrl
+     * @param NewsQuery $query
+     * @param CarbonImmutable $fetchedAt
      *
      * @return list<NewsItem>
      */
@@ -126,7 +144,12 @@ class RssFeedProvider implements NewsProvider
     }
 
     /**
-     * Atom entry をニュース項目へ変換します。
+     * Atom entry をニュースデータへ変換して返す
+     *
+     * @param SimpleXMLElement $xml
+     * @param string $feedUrl
+     * @param NewsQuery $query
+     * @param CarbonImmutable $fetchedAt
      *
      * @return list<NewsItem>
      */
@@ -183,7 +206,11 @@ class RssFeedProvider implements NewsProvider
     }
 
     /**
-     * RSS/Atom summary から HTML を取り除きます。
+     * RSS/Atom summary から HTML を取り除いて返す
+     *
+     * @param mixed $value
+     *
+     * @return string|null
      */
     private function sanitizeSummary(mixed $value): ?string
     {
@@ -199,7 +226,11 @@ class RssFeedProvider implements NewsProvider
     }
 
     /**
-     * Atom link の href を取得します。
+     * Atom link の href を返す
+     *
+     * @param SimpleXMLElement $element
+     *
+     * @return string|null
      */
     private function atomLink(SimpleXMLElement $element): ?string
     {
@@ -222,7 +253,11 @@ class RssFeedProvider implements NewsProvider
     }
 
     /**
-     * Atom category の term を取得します。
+     * Atom category の term を返す
+     *
+     * @param SimpleXMLElement $entry
+     *
+     * @return string|null
      */
     private function atomCategory(SimpleXMLElement $entry): ?string
     {
@@ -239,7 +274,11 @@ class RssFeedProvider implements NewsProvider
     }
 
     /**
-     * provider の時刻文字列を CarbonImmutable へ変換します。
+     * 時刻文字列を CarbonImmutable へ変換して返す
+     *
+     * @param string|null $value
+     *
+     * @return CarbonImmutable|null
      */
     private function parseTime(?string $value): ?CarbonImmutable
     {

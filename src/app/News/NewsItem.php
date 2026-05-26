@@ -5,17 +5,17 @@ namespace App\News;
 use Carbon\CarbonImmutable;
 
 /**
- * provider response から正規化した一般ニュース項目です。
+ * 正規化した一般ニュース
  */
 class NewsItem
 {
-    /** @var string provider 名 */
+    /** @var string Provider 名 */
     public string $providerName;
 
-    /** @var string|null source 名 */
+    /** @var string|null Source 名 */
     public ?string $sourceName;
 
-    /** @var string|null source URL */
+    /** @var string|null Source URL */
     public ?string $sourceUrl;
 
     /** @var string タイトル */
@@ -50,6 +50,20 @@ class NewsItem
 
     /**
      * Constructor.
+     *
+     * @param string $providerName
+     * @param string|null $sourceName
+     * @param string|null $sourceUrl
+     * @param string $title
+     * @param string $url
+     * @param string|null $summary
+     * @param string|null $author
+     * @param string|null $category
+     * @param string|null $language
+     * @param string|null $country
+     * @param CarbonImmutable|null $publishedAt
+     * @param CarbonImmutable $fetchedAt
+     * @param string|null $sourceLabel
      */
     public function __construct(
         string $providerName,

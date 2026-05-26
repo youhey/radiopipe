@@ -5,7 +5,7 @@ namespace App\Topics;
 use Carbon\CarbonImmutable;
 
 /**
- * upstream 記事から作る radiopipe 内部 topic の初期表現です。
+ * Upstream Item から作る radiopipe 内部 Topic 初期表現
  */
 class TopicDraft
 {
@@ -69,8 +69,23 @@ class TopicDraft
     /**
      * Constructor.
      *
+     * @param string $id
+     * @param string $sourceType
+     * @param string|null $sourceName
+     * @param string|null $title
+     * @param string|null $originalTitle
+     * @param string|null $url
+     * @param string|null $discussionUrl
+     * @param string|null $summarySeed
+     * @param string|null $whyItMattersSeed
      * @param list<string> $tags
      * @param list<string> $entities
+     * @param float|int|null $importance
+     * @param float|null $confidence
+     * @param string|null $contentType
+     * @param string|null $limitations
+     * @param CarbonImmutable|null $publishedAt
+     * @param CarbonImmutable|null $fetchedAt
      * @param array{provider: string, upstream_id: int|string} $sourceRefs
      * @param array{status?: string|null, score?: int|null} $upstreamSelection
      */

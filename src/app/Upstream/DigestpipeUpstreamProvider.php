@@ -3,10 +3,11 @@
 namespace App\Upstream;
 
 use Carbon\CarbonImmutable;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 
 /**
- * digestpipe private API から完了済み digest 記事を取得する provider です。
+ * Upstream (digestpipe private API) から Digest Items を取得する Provider
  */
 class DigestpipeUpstreamProvider implements UpstreamProvider
 {
@@ -20,6 +21,11 @@ class DigestpipeUpstreamProvider implements UpstreamProvider
 
     /**
      * Constructor.
+     *
+     * @param string $baseUrl
+     * @param string|null $apiKey
+     * @param int $timeout
+     * @param int $maxRetries
      */
     public function __construct(string $baseUrl, ?string $apiKey, int $timeout, int $maxRetries)
     {
@@ -30,9 +36,13 @@ class DigestpipeUpstreamProvider implements UpstreamProvider
     }
 
     /**
-     * digestpipe response を内部 upstream 記事形式へ正規化します。
+     * レスポンスを内部 Upstream Item 形式へ正規化して返す
+     *
+     * @param UpstreamArticleQuery $query
      *
      * @return list<UpstreamArticleItem>
+     *
+     * @throws ConnectionException
      */
     public function fetch(UpstreamArticleQuery $query): array
     {
@@ -93,7 +103,7 @@ class DigestpipeUpstreamProvider implements UpstreamProvider
     }
 
     /**
-     * provider の object-like 値を配列として扱います。
+     * Provider の object-like 値を連想配列扱いで返す
      *
      * @return array<string, mixed>
      */

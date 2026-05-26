@@ -5,12 +5,12 @@ namespace App\Upstream;
 use RuntimeException;
 
 /**
- * upstream provider の取得・正規化失敗を表します。
+ * Upstream Provider からの取得・正規化失敗を表現する例外
  */
 class UpstreamProviderException extends RuntimeException
 {
     /**
-     * HTTP response が失敗した場合の例外を作成します。
+     * HTTP Response が失敗した場合の例外を作成して返す
      */
     public static function failedHttpResponse(string $provider, int $status): self
     {
@@ -18,7 +18,7 @@ class UpstreamProviderException extends RuntimeException
     }
 
     /**
-     * provider response が期待した形式ではない場合の例外を作成します。
+     * Provider Response が期待した形式ではない場合の例外を作成して返す
      */
     public static function invalidResponse(string $provider): self
     {

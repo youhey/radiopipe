@@ -5,12 +5,12 @@ namespace App\News;
 use Carbon\CarbonImmutable;
 
 /**
- * テストとローカル開発用の固定ニュース provider です。
+ * テストとローカル開発用の固定ニュース Provider
  */
 class FakeNewsProvider implements NewsProvider
 {
     /**
-     * deterministic な fake 一般ニュース項目を返します。
+     * deterministic な fake データを返す
      *
      * @return list<NewsItem>
      */

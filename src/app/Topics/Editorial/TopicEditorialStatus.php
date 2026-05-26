@@ -3,7 +3,7 @@
 namespace App\Topics\Editorial;
 
 /**
- * Topic Editorial Evaluation の phase status です。
+ * Topic Editorial Evaluation の Phase Status
  */
 enum TopicEditorialStatus: string
 {

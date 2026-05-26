@@ -5,12 +5,14 @@ namespace App\Upstream;
 use Carbon\CarbonImmutable;
 
 /**
- * テストとローカル開発用の固定 upstream provider です。
+ * テスト用の Fake Provider
  */
 class FakeUpstreamProvider implements UpstreamProvider
 {
     /**
-     * deterministic な fake upstream 記事項目を返します。
+     * deterministic な fake Upstream Items を返す
+     *
+     * @param UpstreamArticleQuery $query
      *
      * @return list<UpstreamArticleItem>
      */

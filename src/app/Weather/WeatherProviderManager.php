@@ -5,12 +5,12 @@ namespace App\Weather;
 use InvalidArgumentException;
 
 /**
- * 設定に基づいて weather provider と既定 query を解決します。
+ * 設定に基づいて Weather Provider と既定 Query を解決
  */
 class WeatherProviderManager
 {
     /**
-     * provider 名から weather provider を解決します。
+     * provider 名から weather provider を解決
      */
     public function driver(?string $driver = null): WeatherProvider
     {
@@ -28,7 +28,7 @@ class WeatherProviderManager
     }
 
     /**
-     * 設定された既定地点の query を作成します。
+     * 設定された既定地点の query を作成して返す
      */
     public function defaultQuery(): WeatherQuery
     {
@@ -48,7 +48,11 @@ class WeatherProviderManager
     }
 
     /**
-     * 設定済み provider で既定地点の天気を取得します。
+     * 設定済み provider で既定地点の天気を取得して返す
+     *
+     * @param WeatherQuery|null $query
+     *
+     * @return WeatherReport
      */
     public function current(?WeatherQuery $query = null): WeatherReport
     {
@@ -56,7 +60,12 @@ class WeatherProviderManager
     }
 
     /**
-     * 文字列設定を取得します。
+     * 文字列設定を返す
+     *
+     * @param string $key
+     * @param string $default
+     *
+     * @return string
      */
     private function stringConfig(string $key, string $default): string
     {
@@ -70,7 +79,11 @@ class WeatherProviderManager
     }
 
     /**
-     * nullable な文字列設定を取得します。
+     * nullable な文字列設定を返す
+     *
+     * @param string $key
+     *
+     * @return string|null
      */
     private function nullableStringConfig(string $key): ?string
     {
@@ -84,7 +97,12 @@ class WeatherProviderManager
     }
 
     /**
-     * 整数設定を取得します。
+     * 整数設定を返す
+     *
+     * @param string $key
+     * @param int $default
+     *
+     * @return int
      */
     private function intConfig(string $key, int $default): int
     {

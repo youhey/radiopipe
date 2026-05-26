@@ -5,7 +5,7 @@ namespace App\Topics\Editorial;
 use App\Topics\TopicDraft;
 
 /**
- * テストとローカル開発向けの deterministic な fake editorial analyzer です。
+ * テスト向けの deterministic な Fake Editorial Analyzer
  */
 class FakeTopicEditorialAnalyzer implements TopicEditorialAnalyzer
 {
@@ -13,6 +13,8 @@ class FakeTopicEditorialAnalyzer implements TopicEditorialAnalyzer
 
     /**
      * Constructor.
+     *
+     * @param TopicDuplicateCandidateDetector|null $duplicateCandidateDetector
      */
     public function __construct(?TopicDuplicateCandidateDetector $duplicateCandidateDetector = null)
     {
@@ -20,7 +22,11 @@ class FakeTopicEditorialAnalyzer implements TopicEditorialAnalyzer
     }
 
     /**
-     * TopicDraft から fake editorial evaluation を生成します。
+     * TopicDraft から Fake Editorial Evaluation を生成して返す
+     *
+     * @param TopicDraft $topicDraft
+     *
+     * @return TopicEditorialEvaluation
      */
     public function analyze(TopicDraft $topicDraft): TopicEditorialEvaluation
     {

@@ -6,12 +6,16 @@ use Carbon\CarbonImmutable;
 use InvalidArgumentException;
 
 /**
- * 設定に基づいて upstream provider と既定 query を解決します。
+ * 設定に基づいて Upstream Provider と既定 Query を解決
  */
 class UpstreamProviderManager
 {
     /**
-     * provider 名から upstream provider を解決します。
+     * Provider 名から Upstream Provider を解決して返す
+     *
+     * @param string|null $driver
+     *
+     * @return UpstreamProvider
      */
     public function driver(?string $driver = null): UpstreamProvider
     {
@@ -30,7 +34,11 @@ class UpstreamProviderManager
     }
 
     /**
-     * 設定された既定 window と limit の query を作成します。
+     * 設定された既定 Window と Limit の Query を作成して返す
+     *
+     * @param CarbonImmutable|null $now
+     *
+     * @return UpstreamArticleQuery
      */
     public function defaultQuery(?CarbonImmutable $now = null): UpstreamArticleQuery
     {
@@ -45,7 +53,9 @@ class UpstreamProviderManager
     }
 
     /**
-     * 設定済み provider で upstream 記事を取得します。
+     * 設定済み Provider で Upstream Items を取得して返す
+     *
+     * @param UpstreamArticleQuery|null $query
      *
      * @return list<UpstreamArticleItem>
      */
@@ -55,7 +65,12 @@ class UpstreamProviderManager
     }
 
     /**
-     * 文字列設定を取得します。
+     * 文字列設定を返す
+     *
+     * @param string $key
+     * @param string $default
+     *
+     * @return string
      */
     private function stringConfig(string $key, string $default): string
     {
@@ -69,7 +84,11 @@ class UpstreamProviderManager
     }
 
     /**
-     * nullable な文字列設定を取得します。
+     * nullable な文字列設定を返す
+     *
+     * @param string $key
+     *
+     * @return string|null
      */
     private function nullableStringConfig(string $key): ?string
     {
@@ -83,7 +102,12 @@ class UpstreamProviderManager
     }
 
     /**
-     * 整数設定を取得します。
+     * 整数設定を返す
+     *
+     * @param string $key
+     * @param int $default
+     *
+     * @return int
      */
     private function intConfig(string $key, int $default): int
     {
