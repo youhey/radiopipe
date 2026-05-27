@@ -14,6 +14,21 @@ php artisan radiopipe:topics:debug --limit=10 | jq
 
 The command prints JSON to stdout, uses configured services, and is intended only for development/debugging.
 
+## Admin Panel
+
+The internal admin panel is available at `/admin`. It uses Google OAuth only; password login, registration, password reset, and invite flows are not enabled.
+
+Required environment variables:
+
+```env
+RADIOPIPE_ADMIN_ALLOWED_EMAILS=admin@example.test
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GOOGLE_REDIRECT_URI="${APP_URL}/auth/google/callback"
+```
+
+`RADIOPIPE_ADMIN_ALLOWED_EMAILS` is a comma-separated allow list. Email matching is case-insensitive and trims whitespace. If the allow list is empty, no user can access the admin panel.
+
 ## Branch And CI Workflow
 
 Recommended development flow:

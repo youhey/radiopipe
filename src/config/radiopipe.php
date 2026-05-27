@@ -3,8 +3,16 @@
 $weatherDefaultLatitude = env('RADIOPIPE_WEATHER_DEFAULT_LATITUDE');
 $weatherDefaultLongitude = env('RADIOPIPE_WEATHER_DEFAULT_LONGITUDE');
 $rssFeeds = env('RADIOPIPE_RSS_FEEDS', '');
+$adminAllowedEmails = env('RADIOPIPE_ADMIN_ALLOWED_EMAILS', '');
 
 return [
+    'admin' => [
+        'allowed_emails' => array_values(array_filter(
+            array_map('trim', explode(',', is_string($adminAllowedEmails) ? $adminAllowedEmails : '')),
+            static fn (string $email): bool => $email !== '',
+        )),
+    ],
+
     'upstream' => [
         'provider' => env('RADIOPIPE_UPSTREAM_PROVIDER', 'fake'),
         'url' => env('RADIOPIPE_UPSTREAM_URL'),
