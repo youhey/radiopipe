@@ -14,6 +14,11 @@ php artisan radiopipe:topics:debug --limit=10 | jq
 
 The command prints JSON to stdout, uses configured services, and is intended only for development/debugging.
 
+## Development Checks
+
+Use `make test` to run the PHPUnit test suite.
+Use `make lint` for static and mechanical checks, including PHPStan, PHP-CS-Fixer dry-run, and Composer audit.
+
 ## Admin Panel
 
 The internal admin panel is available at `/admin`. It uses Google OAuth only; password login, registration, password reset, and invite flows are not enabled.
@@ -52,7 +57,7 @@ Recommended development flow:
 5. Merge into `main`.
 6. Let Laravel Cloud deploy from `main`.
 
-The CI workflow runs tests, static analysis, coding style checks, migrations against MySQL, and Composer audit. It does not deploy. Branch protection can later require the CI checks before merging into `main`.
+The CI workflow runs tests, static analysis, coding style checks, migrations against MySQL, and Composer audit. Local `make test` and `make lint` cover the main pre-merge checks except the CI-only MySQL migration step. The workflow does not deploy. Branch protection can later require the CI checks before merging into `main`.
 
 ## Dependency Maintenance
 

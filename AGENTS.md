@@ -200,13 +200,15 @@ make test
 
 Automated tests must not call real external APIs. Use Laravel HTTP fakes, mocked services, fixtures, or fake drivers.
 
-Static Analysis
+Static And Mechanical Checks
 
 Use PHPStan for static analysis.
+Use PHP-CS-Fixer dry-run for coding style checks.
+Use Composer audit for PHP dependency vulnerability checks.
 
 PHPStan should be configured in the Laravel application under src/.
 
-Use the Makefile for normal static analysis:
+Use the Makefile for normal static and mechanical checks:
 
 make lint
 
