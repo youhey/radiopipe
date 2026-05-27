@@ -12,7 +12,13 @@ Inspect the configured topic pipeline without persisting results:
 php artisan radiopipe:topics:debug --limit=10 | jq
 ```
 
-The command prints JSON to stdout, uses configured services, and is intended only for development/debugging.
+Inspect the configured scenario generation pipeline without persisting results:
+
+```bash
+php artisan radiopipe:scenario:debug --limit=10 --character=neko_nyan_balanced_radio | jq
+```
+
+These commands print JSON to stdout, use configured services, and are intended only for development/debugging. The scenario debug command uses an active character profile and does not write scenario records.
 
 ## Development Checks
 
