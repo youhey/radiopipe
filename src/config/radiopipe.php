@@ -57,6 +57,12 @@ return [
         'model' => env('RADIOPIPE_TOPIC_EDITORIAL_MODEL', 'gpt-5.4-mini'),
     ],
 
+    'scenario' => [
+        'generator' => env('RADIOPIPE_SCENARIO_GENERATOR', 'fake'),
+        'max_topics' => (int) env('RADIOPIPE_SCENARIO_MAX_TOPICS', 5),
+        'target_seconds' => (int) env('RADIOPIPE_SCENARIO_TARGET_SECONDS', 900),
+    ],
+
     'openai' => [
         'api_key' => env('OPENAI_API_KEY'),
         'request_timeout' => (int) env('OPENAI_REQUEST_TIMEOUT', 60),

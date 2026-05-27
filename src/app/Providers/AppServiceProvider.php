@@ -4,6 +4,8 @@ namespace App\Providers;
 
 use App\News\NewsProvider;
 use App\News\NewsProviderManager;
+use App\Scenarios\FakeScenarioGenerator;
+use App\Scenarios\ScenarioGenerator;
 use App\Topics\Editorial\FakeTopicEditorialAnalyzer;
 use App\Topics\Editorial\OpenAiTopicEditorialAnalyzer;
 use App\Topics\Editorial\TopicEditorialAnalyzer;
@@ -50,6 +52,18 @@ class AppServiceProvider extends ServiceProvider
                     $this->intConfig('radiopipe.openai.max_retries', 2),
                 ),
                 default => throw new InvalidArgumentException("Unsupported radiopipe topic editorial analyzer [{$resolvedAnalyzer}]."),
+            };
+        });
+
+        $this->app->bind(ScenarioGenerator::class, function (): ScenarioGenerator {
+            $generator = config('radiopipe.scenario.generator', 'fake');
+            $resolvedGenerator = is_string($generator) && $generator !== '' ? $generator : 'fake';
+
+            return match ($resolvedGenerator) {
+                'fake' => new FakeScenarioGenerator(
+                    maxTopics: $this->intConfig('radiopipe.scenario.max_topics', 5),
+                ),
+                default => throw new InvalidArgumentException("Unsupported radiopipe scenario generator [{$resolvedGenerator}]."),
             };
         });
     }
