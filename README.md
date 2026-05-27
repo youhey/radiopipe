@@ -29,6 +29,8 @@ GOOGLE_REDIRECT_URI="${APP_URL}/auth/google/callback"
 
 `RADIOPIPE_ADMIN_ALLOWED_EMAILS` is a comma-separated allow list. Email matching is case-insensitive and trims whitespace. If the allow list is empty, no user can access the admin panel.
 
+Character profiles are managed from the Filament admin panel as master data for future scenario generation instructions. Do not commit private character data; the committed sample profile is the public dummy character `ねこにゃん`.
+
 ## Branch And CI Workflow
 
 Recommended development flow:
