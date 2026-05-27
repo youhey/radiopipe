@@ -59,6 +59,7 @@ return [
 
     'scenario' => [
         'generator' => env('RADIOPIPE_SCENARIO_GENERATOR', 'fake'),
+        'model' => env('RADIOPIPE_SCENARIO_MODEL', 'gpt-5.4-mini'),
         'max_topics' => (int) env('RADIOPIPE_SCENARIO_MAX_TOPICS', 5),
         'target_seconds' => (int) env('RADIOPIPE_SCENARIO_TARGET_SECONDS', 900),
     ],

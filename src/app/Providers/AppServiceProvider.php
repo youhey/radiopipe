@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\News\NewsProvider;
 use App\News\NewsProviderManager;
 use App\Scenarios\FakeScenarioGenerator;
+use App\Scenarios\OpenAiScenarioGenerator;
 use App\Scenarios\ScenarioGenerator;
 use App\Topics\Editorial\FakeTopicEditorialAnalyzer;
 use App\Topics\Editorial\OpenAiTopicEditorialAnalyzer;
@@ -61,6 +62,13 @@ class AppServiceProvider extends ServiceProvider
 
             return match ($resolvedGenerator) {
                 'fake' => new FakeScenarioGenerator(
+                    maxTopics: $this->intConfig('radiopipe.scenario.max_topics', 5),
+                ),
+                'openai' => new OpenAiScenarioGenerator(
+                    $this->nullableStringConfig('radiopipe.openai.api_key'),
+                    $this->stringConfig('radiopipe.scenario.model', 'gpt-5.4-mini'),
+                    $this->intConfig('radiopipe.openai.request_timeout', 60),
+                    $this->intConfig('radiopipe.openai.max_retries', 2),
                     maxTopics: $this->intConfig('radiopipe.scenario.max_topics', 5),
                 ),
                 default => throw new InvalidArgumentException("Unsupported radiopipe scenario generator [{$resolvedGenerator}]."),

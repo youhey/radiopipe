@@ -88,7 +88,8 @@ Phase 6 `Topic Editorial Evaluation` の analyzer 設定です。
 | 変数 | 既定値 | 説明 |
 |---|---|---|
 | `RADIOPIPE_SCENARIO_GENERATOR` | `fake` | scenario generator driver。現時点では local/test 用の `fake` のみを使います。 |
-| `RADIOPIPE_SCENARIO_MAX_TOPICS` | `5` | fake scenario generation で使う最大 topic 数。 |
+| `RADIOPIPE_SCENARIO_MODEL` | `gpt-5.4-mini` | OpenAI scenario generator で使う model 名。 |
+| `RADIOPIPE_SCENARIO_MAX_TOPICS` | `5` | scenario generation で使う最大 topic 数。 |
 | `RADIOPIPE_SCENARIO_TARGET_SECONDS` | `900` | scenario の目標読み上げ秒数。 |
 | `RADIOPIPE_AI_DRIVER` | `fake` | scenario generation 系 AI driver の既定値。 |
 | `RADIOPIPE_RUNDOWN_MODEL` | `gpt-5.4-mini` | rundown generation 用 model 名。 |
