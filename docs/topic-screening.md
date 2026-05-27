@@ -114,28 +114,27 @@ radiopipe は `radiopipe.topic_screening.content_type_scores` に明示設定さ
 
 ### Limitations
 
-`limitations` に弱い情報源を示すキーワードが含まれる場合、`limitation_penalty` は `30` になります。
+`limitations` などの対象フィールドに active な limitation keyword rule が一致する場合、rule の `penalty` が `limitation_penalty` になります。
+複数 rule が一致した場合は最大 penalty を使います。
 該当しない場合は `0` です。
 
-現在の対象キーワード:
+limitation keyword rule は `topic_screening_keyword_rules` table で管理します。
+既定の初期データは `TopicScreeningKeywordRuleSeeder` が投入します。
+Filament 管理画面の `Topic Screening Keyword Rules` から編集できます。
 
-```txt
-headline only
-title only
-only a headline
-no body
-missing body
-incomplete
-truncated
-not independently verified
-unverified
-speculative
-subjective
-promotional
-landing page
-extraction failed
-insufficient context
-```
+初期 limitation rule の既定値:
+
+| フィールド | 値 |
+|---|---|
+| `rule_type` | `limitation` |
+| `match_type` | `contains` |
+| `target_fields` | `["limitations"]` |
+| `penalty` | `30` |
+| `severity` | `medium` |
+| `action` | `flag` |
+
+Keyword 一覧は database が source of truth です。
+`config/radiopipe.php` に fallback keyword list は置きません。
 
 `limitation_penalty >= 30` は uncertainty 判定にも使います。
 
@@ -162,43 +161,42 @@ status と score の合計後に `-5..+5` へ clamp します。
 
 ## Sensitive Flag
 
-次の値を結合した文字列に sensitive keyword が含まれる場合、`is_sensitive = true` になります。
+sensitive keyword rule の `target_fields` に含まれる値に keyword が一致する場合、`is_sensitive = true` になります。
+`action = reject` の rule に一致した場合は `rejected_sensitive` の対象になります。
+`action = flag` の rule は sensitivity flag だけを立てます。
+
+初期 sensitive rule の既定 target fields:
 
 - `title`
 - `summary_seed`
 - `why_it_matters_seed`
+- `tags`
 - `content_type`
 - `limitations`
-- `tags`
 
-現在の対象キーワード:
+初期 sensitive rule の既定値:
 
-```txt
-disaster
-accident
-crime
-war
-military
-terrorism
-politics
-election
-medical
-health
-finance
-investment
-self-harm
-sexual
-abuse
-violence
-hate
-discrimination
-personal data
-credential leak
-security breach
-exploit
-```
+| フィールド | 値 |
+|---|---|
+| `rule_type` | `sensitive` |
+| `match_type` | `contains` |
+| `target_fields` | `["title", "summary_seed", "why_it_matters_seed", "tags", "content_type", "limitations"]` |
+| `penalty` | `null` |
+| `severity` | `medium` |
+| `action` | `reject` |
 
 この判定は低コストな deterministic flag であり、policy-heavy な moderation ではありません。
+Keyword 一覧は database が source of truth です。
+`config/radiopipe.php` に fallback keyword list は置きません。
+
+active な keyword rule が 1 件もない場合、keyword matching は skip されます。
+その場合は次の warning log が 1 回出力されます。
+
+```txt
+No active topic screening keyword rules found. Keyword matching will be skipped.
+```
+
+Keyword rule の cache はまだ使いません。
 
 ## Screening Score
 
@@ -224,7 +222,7 @@ weights は `config/radiopipe.php` の `radiopipe.topic_screening.weights` で�
 |---|---|
 | `is_duplicate` | `url` が既知 URL 一覧に完全一致 |
 | `is_uncertain` | `upstream_confidence_score < 45` または `limitation_penalty >= 30` |
-| `is_sensitive` | sensitive keyword に一致 |
+| `is_sensitive` | sensitive keyword rule に一致 |
 
 ## Screening Status
 
@@ -233,7 +231,7 @@ weights は `config/radiopipe.php` の `radiopipe.topic_screening.weights` で�
 | 優先順 | 条件 | `screening_status` |
 |---:|---|---|
 | 1 | `is_duplicate = true` | `rejected_duplicate` |
-| 2 | `is_sensitive = true` | `rejected_sensitive` |
+| 2 | `action = reject` の sensitive keyword rule に一致 | `rejected_sensitive` |
 | 3 | `is_uncertain = true` | `rejected_uncertain` |
 | 4 | `screening_score < 45` | `rejected_low_value` |
 | 5 | 上記に該当しない | `passed` |

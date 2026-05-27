@@ -2,6 +2,7 @@
 
 namespace App\Topics\Screening;
 
+use App\Models\TopicScreeningKeywordRule;
 use App\Topics\TopicDraft;
 use Carbon\CarbonImmutable;
 
@@ -10,6 +11,16 @@ use Carbon\CarbonImmutable;
  */
 class TopicScreeningEvaluator
 {
+    private TopicScreeningKeywordRuleProvider $keywordRuleProvider;
+
+    /**
+     * Constructor.
+     */
+    public function __construct(?TopicScreeningKeywordRuleProvider $keywordRuleProvider = null)
+    {
+        $this->keywordRuleProvider = $keywordRuleProvider ?? app(TopicScreeningKeywordRuleProvider::class);
+    }
+
     /**
      * TopicDraft を Stage 1 screening で評価
      *
@@ -29,9 +40,12 @@ class TopicScreeningEvaluator
         $importanceScore = $this->importanceScore($draft, $reasons);
         $confidenceScore = $this->confidenceScore($draft, $reasons);
         $contentTypeScore = $this->contentTypeScore($draft, $reasons);
-        $limitationPenalty = $this->limitationPenalty($draft, $reasons);
+        $keywordRules = $this->keywordRuleProvider->activeRules();
+        $limitationPenalty = $this->limitationPenalty($draft, $keywordRules['limitation'], $reasons);
         $selectionBonus = $this->selectionBonus($draft, $reasons);
-        $isSensitive = $this->isSensitive($draft, $reasons);
+        $sensitiveAssessment = $this->sensitiveAssessment($draft, $keywordRules['sensitive'], $reasons);
+        $isSensitive = $sensitiveAssessment['is_sensitive'];
+        $rejectSensitive = $sensitiveAssessment['reject_sensitive'];
         $isUncertain = $confidenceScore < $this->intConfig('radiopipe.topic_screening.thresholds.uncertain_confidence_score', 45)
             || $limitationPenalty >= $this->intConfig('radiopipe.topic_screening.thresholds.strong_limitation_penalty', 30);
 
@@ -52,7 +66,7 @@ class TopicScreeningEvaluator
 
         $screeningScore = $this->clampInt((int) round($weightedScore), 0, 100);
         $lowValueThreshold = $this->intConfig('radiopipe.topic_screening.thresholds.low_value_score', 45);
-        $screeningStatus = $this->screeningStatus($isDuplicateUrl, $isSensitive, $isUncertain, $screeningScore, $lowValueThreshold);
+        $screeningStatus = $this->screeningStatus($isDuplicateUrl, $rejectSensitive, $isUncertain, $screeningScore, $lowValueThreshold);
 
         if ($screeningScore < $lowValueThreshold) {
             $reasons[] = 'screening score is below threshold';
@@ -204,30 +218,26 @@ class TopicScreeningEvaluator
     }
 
     /**
-     * Limitations Text から Penalty を算出して返す
+     * Limitation keyword rule から Penalty を算出して返す
      *
      * @param TopicDraft $draft
+     * @param list<TopicScreeningKeywordRule> $rules
      * @param list<string> $reasons
      *
      * @return int
      */
-    private function limitationPenalty(TopicDraft $draft, array &$reasons): int
+    private function limitationPenalty(TopicDraft $draft, array $rules, array &$reasons): int
     {
-        $haystack = strtolower($draft->limitations ?? '');
+        $penalty = 0;
 
-        if ($haystack === '') {
-            return 0;
-        }
-
-        foreach ($this->stringListConfig('radiopipe.topic_screening.limitation_keywords') as $keyword) {
-            if (str_contains($haystack, strtolower($keyword))) {
+        foreach ($rules as $rule) {
+            if ($this->matchesRule($draft, $rule)) {
                 $reasons[] = 'limitations mention weak source quality';
-
-                return $this->intConfig('radiopipe.topic_screening.penalties.limitation_keyword', 30);
+                $penalty = max($penalty, $rule->penalty ?? 0);
             }
         }
 
-        return 0;
+        return $penalty;
     }
 
     /**
@@ -264,33 +274,112 @@ class TopicScreeningEvaluator
     }
 
     /**
-     * 明確に Sensitive な Topic を判定
+     * Sensitive keyword rule に一致する Topic を判定する。
      *
      * @param TopicDraft $draft
+     * @param list<TopicScreeningKeywordRule> $rules
      * @param list<string> $reasons
      *
-     * @return bool
+     * @return array{is_sensitive: bool, reject_sensitive: bool}
      */
-    private function isSensitive(TopicDraft $draft, array &$reasons): bool
+    private function sensitiveAssessment(TopicDraft $draft, array $rules, array &$reasons): array
     {
-        $haystack = strtolower(implode(' ', array_filter([
-            $draft->title,
-            $draft->summarySeed,
-            $draft->whyItMattersSeed,
-            $draft->contentType,
-            $draft->limitations,
-            implode(' ', $draft->tags),
-        ], static fn (?string $value): bool => $value !== null && $value !== '')));
+        $isSensitive = false;
+        $rejectSensitive = false;
 
-        foreach ($this->stringListConfig('radiopipe.topic_screening.sensitive_keywords') as $keyword) {
-            if (str_contains($haystack, strtolower($keyword))) {
+        foreach ($rules as $rule) {
+            if ($this->matchesRule($draft, $rule)) {
                 $reasons[] = 'topic contains sensitive keyword';
+                $isSensitive = true;
 
+                if ($rule->action === TopicScreeningKeywordRule::ACTION_REJECT) {
+                    $rejectSensitive = true;
+                }
+            }
+        }
+
+        return [
+            'is_sensitive' => $isSensitive,
+            'reject_sensitive' => $rejectSensitive,
+        ];
+    }
+
+    /**
+     * TopicDraft が keyword rule に一致するか判定する。
+     */
+    private function matchesRule(TopicDraft $draft, TopicScreeningKeywordRule $rule): bool
+    {
+        $keyword = mb_strtolower(trim($rule->keyword));
+
+        if ($keyword === '' || $rule->match_type !== TopicScreeningKeywordRule::MATCH_CONTAINS) {
+            return false;
+        }
+
+        foreach ($this->targetFieldValues($draft, $rule) as $value) {
+            if (str_contains(mb_strtolower($value), $keyword)) {
                 return true;
             }
         }
 
         return false;
+    }
+
+    /**
+     * Rule の target_fields から検索対象文字列を返す。
+     *
+     * @return list<string>
+     */
+    private function targetFieldValues(TopicDraft $draft, TopicScreeningKeywordRule $rule): array
+    {
+        $targetFields = $rule->getAttribute('target_fields');
+
+        if (! is_array($targetFields)) {
+            return [];
+        }
+
+        $values = [];
+
+        foreach ($targetFields as $field) {
+            if (! is_string($field)) {
+                continue;
+            }
+
+            $values = [
+                ...$values,
+                ...match ($field) {
+                    TopicScreeningKeywordRule::FIELD_TITLE => $this->stringValues($draft->title),
+                    TopicScreeningKeywordRule::FIELD_SUMMARY_SEED => $this->stringValues($draft->summarySeed),
+                    TopicScreeningKeywordRule::FIELD_WHY_IT_MATTERS_SEED => $this->stringValues($draft->whyItMattersSeed),
+                    TopicScreeningKeywordRule::FIELD_TAGS => $this->stringValues($draft->tags),
+                    TopicScreeningKeywordRule::FIELD_CONTENT_TYPE => $this->stringValues($draft->contentType),
+                    TopicScreeningKeywordRule::FIELD_LIMITATIONS => $this->stringValues($draft->limitations),
+                    default => [],
+                },
+            ];
+        }
+
+        return $values;
+    }
+
+    /**
+     * 文字列または文字列配列を検索用文字列一覧へ正規化する。
+     *
+     * @return list<string>
+     */
+    private function stringValues(mixed $value): array
+    {
+        if (is_string($value) && $value !== '') {
+            return [$value];
+        }
+
+        if (! is_array($value)) {
+            return [];
+        }
+
+        return array_values(array_filter(
+            $value,
+            static fn (mixed $item): bool => is_string($item) && $item !== '',
+        ));
     }
 
     private function screeningStatus(bool $isDuplicate, bool $isSensitive, bool $isUncertain, int $screeningScore, int $lowValueThreshold): TopicScreeningStatus
@@ -364,24 +453,5 @@ class TopicScreeningEvaluator
         }
 
         return $map;
-    }
-
-    /**
-     * @param string $key
-     *
-     * @return list<string>
-     */
-    private function stringListConfig(string $key): array
-    {
-        $value = config($key, []);
-
-        if (! is_array($value)) {
-            return [];
-        }
-
-        return array_values(array_filter(
-            $value,
-            static fn (mixed $item): bool => is_string($item) && $item !== '',
-        ));
     }
 }

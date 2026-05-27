@@ -46,6 +46,8 @@ RADIOPIPE_ADMIN_DEV_LOGIN_EMAIL=admin@example.test
 
 Character profiles are managed from the Filament admin panel as master data for future scenario generation instructions. Do not commit private character data; the committed sample profile is the public dummy character `ねこにゃん`.
 
+Topic screening keyword rules are also managed from the Filament admin panel. The database is the source of truth; default limitation and sensitive keyword rules are seeded by `TopicScreeningKeywordRuleSeeder`, and config fallback keyword lists are intentionally not used.
+
 ## Branch And CI Workflow
 
 Recommended development flow:

@@ -2,11 +2,16 @@
 
 namespace Tests\Feature;
 
+use App\Models\TopicScreeningKeywordRule;
 use App\Topics\Screening\TopicScreeningEvaluation;
 use App\Topics\Screening\TopicScreeningEvaluator;
+use App\Topics\Screening\TopicScreeningKeywordRuleProvider;
 use App\Topics\Screening\TopicScreeningStatus;
 use App\Topics\TopicDraft;
 use Carbon\CarbonImmutable;
+use Database\Seeders\TopicScreeningKeywordRuleSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Log;
 use Tests\TestCase;
 
 /**
@@ -14,6 +19,15 @@ use Tests\TestCase;
  */
 class TopicScreeningEvaluatorTest extends TestCase
 {
+    use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->seed(TopicScreeningKeywordRuleSeeder::class);
+    }
+
     public function testHighQualityFreshTopicPassesScreening(): void
     {
         $evaluation = $this->evaluate($this->draft());
@@ -153,6 +167,30 @@ class TopicScreeningEvaluatorTest extends TestCase
         self::assertContains('limitations mention weak source quality', $evaluation->reasons);
     }
 
+    public function testActiveLimitationRuleAppliesMaximumPenalty(): void
+    {
+        TopicScreeningKeywordRule::factory()->create([
+            'rule_type' => TopicScreeningKeywordRule::TYPE_LIMITATION,
+            'keyword' => 'limited extraction',
+            'target_fields' => [TopicScreeningKeywordRule::FIELD_LIMITATIONS],
+            'penalty' => 12,
+            'action' => TopicScreeningKeywordRule::ACTION_FLAG,
+            'sort_order' => 1,
+        ]);
+        TopicScreeningKeywordRule::factory()->create([
+            'rule_type' => TopicScreeningKeywordRule::TYPE_LIMITATION,
+            'keyword' => 'extraction notes',
+            'target_fields' => [TopicScreeningKeywordRule::FIELD_LIMITATIONS],
+            'penalty' => 40,
+            'action' => TopicScreeningKeywordRule::ACTION_FLAG,
+            'sort_order' => 2,
+        ]);
+
+        $evaluation = $this->evaluate($this->draft(limitations: 'This has limited extraction notes.'));
+
+        self::assertSame(40, $evaluation->signals['limitation_penalty']);
+    }
+
     public function testClearlySensitiveTopicSetsSensitivityFlag(): void
     {
         $evaluation = $this->evaluate($this->draft(
@@ -163,6 +201,60 @@ class TopicScreeningEvaluatorTest extends TestCase
         self::assertSame(TopicScreeningStatus::RejectedSensitive, $evaluation->screeningStatus);
         self::assertTrue($evaluation->flags['is_sensitive']);
         self::assertContains('topic contains sensitive keyword', $evaluation->reasons);
+    }
+
+    public function testInactiveRulesAreIgnored(): void
+    {
+        TopicScreeningKeywordRule::query()->where('keyword', 'security breach')->update(['is_active' => false]);
+        TopicScreeningKeywordRule::query()->where('keyword', 'personal data')->update(['is_active' => false]);
+
+        $evaluation = $this->evaluate($this->draft(
+            title: 'Security breach exposes customer personal data',
+            tags: ['security breach'],
+        ));
+
+        self::assertFalse($evaluation->flags['is_sensitive']);
+        self::assertSame(TopicScreeningStatus::Passed, $evaluation->screeningStatus);
+    }
+
+    public function testEmptyRuleTableSkipsKeywordMatchingAndLogsWarning(): void
+    {
+        TopicScreeningKeywordRule::query()->delete();
+        config([
+            'radiopipe.topic_screening.limitation_keywords' => ['title only'],
+            'radiopipe.topic_screening.sensitive_keywords' => ['security breach'],
+        ]);
+        Log::shouldReceive('warning')
+            ->once()
+            ->with('No active topic screening keyword rules found. Keyword matching will be skipped.');
+
+        $evaluation = $this->evaluate($this->draft(
+            title: 'Security breach exposes customer personal data',
+            limitations: 'This is title only and has insufficient context.',
+            tags: ['security breach'],
+        ));
+
+        self::assertSame(0, $evaluation->signals['limitation_penalty']);
+        self::assertFalse($evaluation->flags['is_sensitive']);
+        self::assertFalse($evaluation->flags['is_uncertain']);
+        self::assertSame(TopicScreeningStatus::Passed, $evaluation->screeningStatus);
+    }
+
+    public function testSensitiveFlagActionDoesNotRejectByItself(): void
+    {
+        TopicScreeningKeywordRule::query()->delete();
+        TopicScreeningKeywordRule::factory()->create([
+            'rule_type' => TopicScreeningKeywordRule::TYPE_SENSITIVE,
+            'keyword' => 'security breach',
+            'target_fields' => [TopicScreeningKeywordRule::FIELD_TITLE],
+            'penalty' => null,
+            'action' => TopicScreeningKeywordRule::ACTION_FLAG,
+        ]);
+
+        $evaluation = $this->evaluate($this->draft(title: 'Security breach analysis'));
+
+        self::assertTrue($evaluation->flags['is_sensitive']);
+        self::assertSame(TopicScreeningStatus::Passed, $evaluation->screeningStatus);
     }
 
     public function testLowTotalScreeningScoreBecomesRejectedLowValue(): void
@@ -195,12 +287,16 @@ class TopicScreeningEvaluatorTest extends TestCase
         self::assertSame(100, $this->evaluate($this->draft())->screeningScore);
 
         config([
-            'radiopipe.topic_screening.penalties.limitation_keyword' => 250,
             'radiopipe.topic_screening.weights.freshness' => 0.25,
             'radiopipe.topic_screening.weights.importance' => 0.35,
             'radiopipe.topic_screening.weights.confidence' => 0.25,
             'radiopipe.topic_screening.weights.content_type' => 0.15,
         ]);
+
+        TopicScreeningKeywordRule::query()
+            ->where('rule_type', TopicScreeningKeywordRule::TYPE_LIMITATION)
+            ->where('keyword', 'headline only')
+            ->update(['penalty' => 250]);
 
         self::assertSame(0, $this->evaluate($this->draft(limitations: 'headline only'))->screeningScore);
     }
@@ -274,7 +370,7 @@ class TopicScreeningEvaluatorTest extends TestCase
      */
     private function evaluate(TopicDraft $draft, array $seenUrls = []): TopicScreeningEvaluation
     {
-        return (new TopicScreeningEvaluator())->evaluate(
+        return (new TopicScreeningEvaluator(new TopicScreeningKeywordRuleProvider()))->evaluate(
             $draft,
             $seenUrls,
             CarbonImmutable::parse('2026-05-25T12:00:00Z'),
