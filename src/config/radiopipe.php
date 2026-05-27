@@ -11,6 +11,10 @@ return [
             array_map('trim', explode(',', is_string($adminAllowedEmails) ? $adminAllowedEmails : '')),
             static fn (string $email): bool => $email !== '',
         )),
+        'dev_login' => [
+            'enabled' => (bool) env('RADIOPIPE_ADMIN_DEV_LOGIN_ENABLED', false),
+            'email' => env('RADIOPIPE_ADMIN_DEV_LOGIN_EMAIL'),
+        ],
     ],
 
     'upstream' => [

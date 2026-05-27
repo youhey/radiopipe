@@ -22,12 +22,22 @@ Required environment variables:
 
 ```env
 RADIOPIPE_ADMIN_ALLOWED_EMAILS=admin@example.test
+RADIOPIPE_ADMIN_DEV_LOGIN_ENABLED=false
+RADIOPIPE_ADMIN_DEV_LOGIN_EMAIL=
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
 GOOGLE_REDIRECT_URI="${APP_URL}/auth/google/callback"
 ```
 
 `RADIOPIPE_ADMIN_ALLOWED_EMAILS` is a comma-separated allow list. Email matching is case-insensitive and trims whitespace. If the allow list is empty, no user can access the admin panel.
+
+For local browser debugging, `GET /_local/admin/login` can log in a configured development user without Google OAuth. This helper is disabled by default, only works when `APP_ENV` is `local` or `testing`, and the dev email must also be in `RADIOPIPE_ADMIN_ALLOWED_EMAILS`. Never enable it in production.
+
+```env
+RADIOPIPE_ADMIN_ALLOWED_EMAILS=admin@example.test
+RADIOPIPE_ADMIN_DEV_LOGIN_ENABLED=true
+RADIOPIPE_ADMIN_DEV_LOGIN_EMAIL=admin@example.test
+```
 
 Character profiles are managed from the Filament admin panel as master data for future scenario generation instructions. Do not commit private character data; the committed sample profile is the public dummy character `ねこにゃん`.
 
