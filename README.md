@@ -18,7 +18,14 @@ Inspect the configured scenario generation pipeline without persisting results:
 php artisan radiopipe:scenario:debug --limit=10 --character=neko_nyan_balanced_radio | jq
 ```
 
-These commands print JSON to stdout, use configured services, and are intended only for development/debugging. The scenario debug command uses an active character profile and does not write scenario records.
+Generate and persist an episode:
+
+```bash
+php artisan radiopipe:episodes:generate --character=neko_nyan_balanced_radio
+php artisan radiopipe:episodes:generate --dry-run | jq
+```
+
+These commands use configured providers, analyzers, and scenario generators. Debug and dry-run modes print JSON to stdout without saving. Episode generation persists an `Episode` unless `--dry-run` is used. Audio generation and scheduler configuration are deferred.
 
 ## Development Checks
 
