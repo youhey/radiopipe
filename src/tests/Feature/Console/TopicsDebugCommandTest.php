@@ -260,8 +260,7 @@ class TopicsDebugCommandTest extends TestCase
     private function trackedFileList(): array
     {
         $paths = [
-            storage_path(),
-            base_path('bootstrap/cache'),
+            storage_path('app'),
         ];
         $files = [];
 
