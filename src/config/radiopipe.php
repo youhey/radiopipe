@@ -64,6 +64,14 @@ return [
         'target_seconds' => (int) env('RADIOPIPE_SCENARIO_TARGET_SECONDS', 900),
     ],
 
+    'episode_schedule' => [
+        'enabled' => (bool) env('RADIOPIPE_EPISODE_SCHEDULE_ENABLED', false),
+        'time' => env('RADIOPIPE_EPISODE_SCHEDULE_TIME', '07:00'),
+        'timezone' => env('RADIOPIPE_EPISODE_SCHEDULE_TIMEZONE', 'Asia/Tokyo'),
+        'limit' => (int) env('RADIOPIPE_EPISODE_SCHEDULE_LIMIT', 20),
+        'character' => env('RADIOPIPE_EPISODE_SCHEDULE_CHARACTER'),
+    ],
+
     'openai' => [
         'api_key' => env('OPENAI_API_KEY'),
         'request_timeout' => (int) env('OPENAI_REQUEST_TIMEOUT', 60),

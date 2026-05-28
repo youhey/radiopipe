@@ -87,7 +87,7 @@ Phase 6 `Topic Editorial Evaluation` の analyzer 設定です。
 
 | 変数 | 既定値 | 説明 |
 |---|---|---|
-| `RADIOPIPE_SCENARIO_GENERATOR` | `fake` | scenario generator driver。現時点では local/test 用の `fake` のみを使います。 |
+| `RADIOPIPE_SCENARIO_GENERATOR` | `fake` | scenario generator driver。`fake` は local/test 用の安全な既定値、`openai` は OpenAI-backed generator です。 |
 | `RADIOPIPE_SCENARIO_MODEL` | `gpt-5.4-mini` | OpenAI scenario generator で使う model 名。 |
 | `RADIOPIPE_SCENARIO_MAX_TOPICS` | `5` | scenario generation で使う最大 topic 数。 |
 | `RADIOPIPE_SCENARIO_TARGET_SECONDS` | `900` | scenario の目標読み上げ秒数。 |
@@ -98,6 +98,19 @@ Phase 6 `Topic Editorial Evaluation` の analyzer 設定です。
 | `RADIOPIPE_SCRIPT_DAILY_LIMIT` | `100` | script generation の日次上限。 |
 | `RADIOPIPE_SCRIPT_TARGET_MINUTES` | `15` | 目標 script 長の分数。 |
 | `RADIOPIPE_SCRIPT_OUTPUT_SCHEMA_VERSION` | `1.0` | script output schema version。 |
+
+## Episode Generation Schedule
+
+Laravel scheduler から `radiopipe:episodes:generate` を自動実行するための設定です。
+既定では無効です。hosting platform 側で Laravel scheduler を実行する設定は別途必要です。
+
+| 変数 | 既定値 | 説明 |
+|---|---|---|
+| `RADIOPIPE_EPISODE_SCHEDULE_ENABLED` | `false` | episode generation の scheduled task を登録するか。 |
+| `RADIOPIPE_EPISODE_SCHEDULE_TIME` | `07:00` | episode generation を日次実行する時刻。 |
+| `RADIOPIPE_EPISODE_SCHEDULE_TIMEZONE` | `Asia/Tokyo` | schedule 判定に使う timezone。 |
+| `RADIOPIPE_EPISODE_SCHEDULE_LIMIT` | `20` | scheduled command に渡す upstream article 取得上限。 |
+| `RADIOPIPE_EPISODE_SCHEDULE_CHARACTER` | empty | scheduled command に渡す character key。empty の場合は command 側の既定選択を使います。 |
 
 ## Admin
 

@@ -25,7 +25,21 @@ php artisan radiopipe:episodes:generate --character=neko_nyan_balanced_radio
 php artisan radiopipe:episodes:generate --dry-run | jq
 ```
 
-These commands use configured providers, analyzers, and scenario generators. Debug and dry-run modes print JSON to stdout without saving. Episode generation persists an `Episode` unless `--dry-run` is used. Audio generation and scheduler configuration are deferred.
+These commands use configured providers, analyzers, and scenario generators. Debug and dry-run modes print JSON to stdout without saving. Episode generation persists an `Episode` unless `--dry-run` is used. Audio generation is deferred.
+
+## Episode Generation Schedule
+
+Automatic episode generation is disabled by default. Enable and configure the Laravel scheduler with environment variables:
+
+```env
+RADIOPIPE_EPISODE_SCHEDULE_ENABLED=true
+RADIOPIPE_EPISODE_SCHEDULE_TIME=07:00
+RADIOPIPE_EPISODE_SCHEDULE_TIMEZONE=Asia/Tokyo
+RADIOPIPE_EPISODE_SCHEDULE_LIMIT=20
+RADIOPIPE_EPISODE_SCHEDULE_CHARACTER=neko_nyan_balanced_radio
+```
+
+When enabled, Laravel's scheduler runs `radiopipe:episodes:generate` once per day at the configured time and timezone, passes the configured `--limit`, and passes `--character` only when configured. The hosting platform still needs to run Laravel's scheduler; Laravel Cloud scheduler setup is a deployment concern for a later task.
 
 ## Development Checks
 
