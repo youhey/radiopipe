@@ -4,6 +4,7 @@ namespace Tests\Feature\Admin;
 
 use App\Filament\Pages\CandidateTopicsAnalysis;
 use App\Filament\Pages\EpisodesAnalysis;
+use App\Filament\Widgets\CloudStatusWidget;
 use App\Filament\Widgets\PipelineStatsOverviewWidget;
 use App\Models\CandidateTopic;
 use App\Models\CharacterProfile;
@@ -34,6 +35,10 @@ class AnalysisPagesTest extends TestCase
         $component->assertSee('Pipeline health');
         $component->assertSee('Episodes / last 24h');
         $component->assertSee('Candidate Topics / last 24h');
+
+        $cloudComponent = Livewire::test(CloudStatusWidget::class);
+        $cloudComponent->assertSee('Laravel Cloud Status');
+        $cloudComponent->assertSee('Laravel Cloud API is not configured.');
     }
 
     public function testAuthorizedAdminCanAccessEpisodesAnalysis(): void

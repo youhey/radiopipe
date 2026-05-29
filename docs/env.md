@@ -24,6 +24,15 @@ OpenAI-backed analyzer や将来の AI 生成処理で使う共通設定です�
 | `OPENAI_REQUEST_TIMEOUT` | `60` | OpenAI HTTP request timeout 秒数。 |
 | `OPENAI_MAX_RETRIES` | `2` | OpenAI request の最大 retry 回数。 |
 
+## Laravel Cloud
+
+Filament Dashboard の Cloud Status widget で、Laravel Cloud の最新 deployment 状態を表示するために使います。
+
+| 変数 | 既定値 | 説明 |
+|---|---|---|
+| `LARAVEL_CLOUD_API_TOKEN` | empty | Laravel Cloud API token。commit しません。未設定の場合、Dashboard には safe state を表示します。 |
+| `LARAVEL_CLOUD_ENVIRONMENT_ID` | empty | Laravel Cloud API の environment identifier。例: `env-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`。 |
+
 ## Upstream Provider
 
 構造化 digest JSON を取得する upstream provider の設定です。
