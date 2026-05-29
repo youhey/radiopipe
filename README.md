@@ -29,7 +29,6 @@ Export or compile an episode from saved candidate topics:
 ```bash
 php artisan radiopipe:episodes:export --character=neko_nyan_balanced_radio | jq
 php artisan radiopipe:episodes:compile --character=neko_nyan_balanced_radio
-php artisan radiopipe:pipeline:compile
 ```
 
 `topics:nominate` fetches upstream records and persists `CandidateTopic` snapshots. `episodes:export` generates JSON from saved candidates without saving. `episodes:compile` persists a new `Episode` only when the candidate input fingerprint changed. Audio generation is deferred.
@@ -39,15 +38,10 @@ php artisan radiopipe:pipeline:compile
 Automatic episode generation is disabled by default. Enable and configure the Laravel scheduler with environment variables:
 
 ```env
-RADIOPIPE_PIPELINE_SCHEDULE_ENABLED=true
-RADIOPIPE_PIPELINE_INTERVAL_MINUTES=10
-RADIOPIPE_PIPELINE_TIMEZONE=Asia/Tokyo
-RADIOPIPE_PIPELINE_LIMIT=20
-RADIOPIPE_PIPELINE_CHARACTER=neko_nyan_balanced_radio
 RADIOPIPE_TOPIC_NOMINATION_THROTTLE_SECONDS=3600
 ```
 
-When enabled, Laravel's scheduler runs `radiopipe:pipeline:compile` at the configured short interval. The pipeline runs `radiopipe:topics:nominate` first, then `radiopipe:episodes:compile` only if nomination succeeds. Topic nomination uses a throttle lock controlled by `RADIOPIPE_TOPIC_NOMINATION_THROTTLE_SECONDS`. The hosting platform still needs to run Laravel's scheduler; Laravel Cloud scheduler setup is a deployment concern for a later task.
+Laravel's scheduler registers a named callback `radiopipe:pipeline:compile` every ten minutes with `withoutOverlapping(30)`. The callback runs `radiopipe:topics:nominate` first, then `radiopipe:episodes:compile` only if nomination succeeds. Topic nomination uses a throttle lock controlled by `RADIOPIPE_TOPIC_NOMINATION_THROTTLE_SECONDS`. The hosting platform still needs to run Laravel's scheduler; Laravel Cloud scheduler setup is a deployment concern for a later task.
 
 ## Development Checks
 

@@ -113,9 +113,7 @@ class EpisodesExportCommand extends Command
         $value = $this->option('limit');
 
         if (! is_string($value) || trim($value) === '') {
-            $configured = config('radiopipe.pipeline.limit', 20);
-
-            return is_numeric($configured) ? max(1, (int) $configured) : 20;
+            return 20;
         }
 
         return max(1, (int) $value);

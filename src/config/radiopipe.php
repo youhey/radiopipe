@@ -64,14 +64,6 @@ return [
         'target_seconds' => (int) env('RADIOPIPE_SCENARIO_TARGET_SECONDS', 900),
     ],
 
-    'pipeline' => [
-        'schedule_enabled' => (bool) env('RADIOPIPE_PIPELINE_SCHEDULE_ENABLED', false),
-        'interval_minutes' => (int) env('RADIOPIPE_PIPELINE_INTERVAL_MINUTES', 10),
-        'timezone' => env('RADIOPIPE_PIPELINE_TIMEZONE', 'Asia/Tokyo'),
-        'limit' => (int) env('RADIOPIPE_PIPELINE_LIMIT', 20),
-        'character' => env('RADIOPIPE_PIPELINE_CHARACTER'),
-    ],
-
     'topic_nomination' => [
         'throttle_seconds' => (int) env('RADIOPIPE_TOPIC_NOMINATION_THROTTLE_SECONDS', 3600),
     ],

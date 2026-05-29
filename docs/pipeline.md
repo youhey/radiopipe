@@ -33,8 +33,9 @@ CandidateTopic は再利用可能な入力、EpisodeTopic は生成履歴側の�
 - fingerprint が変わった場合だけ新しい Episode と EpisodeTopic を保存します。
 - 既存 Episode は上書きしません。
 
-`radiopipe:pipeline:compile`:
+scheduled pipeline `radiopipe:pipeline:compile`:
 
+- Laravel scheduler の named callback です。Artisan command ではありません。
 - `radiopipe:topics:nominate` を実行します。
 - nomination が成功した場合だけ `radiopipe:episodes:compile` を実行します。
 
@@ -56,15 +57,9 @@ RADIOPIPE_TOPIC_NOMINATION_THROTTLE_SECONDS=3600
 
 ## Scheduler
 
-自動実行は既定で無効です。
-
 ```env
-RADIOPIPE_PIPELINE_SCHEDULE_ENABLED=false
-RADIOPIPE_PIPELINE_INTERVAL_MINUTES=10
-RADIOPIPE_PIPELINE_TIMEZONE=Asia/Tokyo
-RADIOPIPE_PIPELINE_LIMIT=20
-RADIOPIPE_PIPELINE_CHARACTER=
+RADIOPIPE_TOPIC_NOMINATION_THROTTLE_SECONDS=3600
 ```
 
-有効化すると Laravel scheduler が `radiopipe:pipeline:compile` を短い間隔で実行します。
+Laravel scheduler が named callback `radiopipe:pipeline:compile` を 10 分ごとに実行します。
 Laravel Cloud など hosting platform 側で scheduler を起動する設定は別途必要です。

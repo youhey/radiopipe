@@ -1,12 +1,22 @@
 <?php
 
-use App\Console\EpisodeGenerationSchedule;
-use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schedule;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-app(EpisodeGenerationSchedule::class)->register(app(Schedule::class));
+Schedule::call(static function (): int {
+    $nominateExitCode = Artisan::call('radiopipe:topics:nominate');
+
+    if ($nominateExitCode !== 0) {
+        return $nominateExitCode;
+    }
+
+    return Artisan::call('radiopipe:episodes:compile');
+})
+    ->everyTenMinutes()
+    ->name('radiopipe:pipeline:compile')
+    ->withoutOverlapping(30);

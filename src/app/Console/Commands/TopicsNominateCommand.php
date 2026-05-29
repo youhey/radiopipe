@@ -101,9 +101,7 @@ class TopicsNominateCommand extends Command
         $value = $this->option('limit');
 
         if (! is_string($value) || trim($value) === '') {
-            $configured = config('radiopipe.pipeline.limit', 20);
-
-            return is_numeric($configured) ? max(1, (int) $configured) : 20;
+            return 20;
         }
 
         return max(1, (int) $value);
@@ -118,7 +116,7 @@ class TopicsNominateCommand extends Command
 
     private function timezone(): string
     {
-        $timezone = config('radiopipe.pipeline.timezone', config('app.timezone', 'UTC'));
+        $timezone = config('app.timezone', 'UTC');
 
         return is_string($timezone) && trim($timezone) !== '' ? trim($timezone) : 'UTC';
     }

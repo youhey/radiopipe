@@ -43,7 +43,7 @@ class EpisodesCompileCommand extends Command
         }
 
         try {
-            $result = $this->compiler->compile($character, $this->limitOption(), CarbonImmutable::now($this->timezone()));
+            $result = $this->compiler->compile($character, $this->limitOption(), CarbonImmutable::now());
         } catch (Throwable $exception) {
             $this->error($exception->getMessage());
 
@@ -85,12 +85,6 @@ class EpisodesCompileCommand extends Command
             return $profile;
         }
 
-        $configured = config('radiopipe.pipeline.character');
-
-        if (is_string($configured) && trim($configured) !== '') {
-            return $this->characterProfile(trim($configured));
-        }
-
         $query->getQuery()
             ->orderBy('sort_order')
             ->orderBy('name');
@@ -111,18 +105,9 @@ class EpisodesCompileCommand extends Command
         $value = $this->option('limit');
 
         if (! is_string($value) || trim($value) === '') {
-            $configured = config('radiopipe.pipeline.limit', 20);
-
-            return is_numeric($configured) ? max(1, (int) $configured) : 20;
+            return 20;
         }
 
         return max(1, (int) $value);
-    }
-
-    private function timezone(): string
-    {
-        $timezone = config('radiopipe.pipeline.timezone', config('app.timezone', 'UTC'));
-
-        return is_string($timezone) && trim($timezone) !== '' ? trim($timezone) : 'UTC';
     }
 }
