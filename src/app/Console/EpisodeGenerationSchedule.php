@@ -3,14 +3,15 @@
 namespace App\Console;
 
 use Illuminate\Console\Scheduling\Schedule;
+use InvalidArgumentException;
 
 /**
- * Episode generation command の scheduled task 登録を担当します。
+ * radiopipe pipeline compile command の scheduled task 登録を担当します。
  */
 class EpisodeGenerationSchedule
 {
     /**
-     * 設定が有効な場合のみ Episode generation command を scheduler に登録します。
+     * 設定が有効な場合のみ pipeline compile command を scheduler に登録します。
      */
     public function register(Schedule $schedule): void
     {
@@ -18,75 +19,48 @@ class EpisodeGenerationSchedule
             return;
         }
 
-        $parameters = [
-            '--limit' => $this->limit(),
-        ];
+        $event = $schedule->command('radiopipe:pipeline:compile');
 
-        $character = $this->character();
+        match ($this->intervalMinutes()) {
+            5 => $event->everyFiveMinutes(),
+            10 => $event->everyTenMinutes(),
+            15 => $event->everyFifteenMinutes(),
+            30 => $event->everyThirtyMinutes(),
+            default => throw new InvalidArgumentException('Unsupported pipeline schedule interval. Supported values are 5, 10, 15, and 30 minutes.'),
+        };
 
-        if ($character !== null) {
-            $parameters['--character'] = $character;
-        }
-
-        $schedule->command('radiopipe:episodes:generate', $parameters)
-            ->dailyAt($this->time())
+        $event
             ->timezone($this->timezone())
-            ->withoutOverlapping()
-            ->name('radiopipe episode generation')
-            ->description('radiopipe episode generation');
+            ->withoutOverlapping(30)
+            ->name('radiopipe:pipeline:compile')
+            ->description('radiopipe:pipeline:compile');
     }
 
     /**
-     * Episode generation schedule が有効かどうかを返します。
+     * pipeline schedule が有効かどうかを返します。
      */
     private function enabled(): bool
     {
-        return config('radiopipe.episode_schedule.enabled', false) === true;
+        return config('radiopipe.pipeline.schedule_enabled', false) === true;
     }
 
     /**
-     * scheduled command に渡す取得件数上限を返します。
+     * pipeline compile の実行間隔を分単位で返します。
      */
-    private function limit(): int
+    private function intervalMinutes(): int
     {
-        $limit = config('radiopipe.episode_schedule.limit', 20);
+        $interval = config('radiopipe.pipeline.interval_minutes', 10);
 
-        return is_numeric($limit) ? (int) $limit : 20;
+        return is_numeric($interval) ? (int) $interval : 10;
     }
 
     /**
-     * Episode generation を実行する日次時刻を返します。
-     */
-    private function time(): string
-    {
-        $time = config('radiopipe.episode_schedule.time', '07:00');
-
-        return is_string($time) && trim($time) !== '' ? trim($time) : '07:00';
-    }
-
-    /**
-     * Episode generation schedule の timezone を返します。
+     * pipeline schedule の timezone を返します。
      */
     private function timezone(): string
     {
-        $timezone = config('radiopipe.episode_schedule.timezone', 'Asia/Tokyo');
+        $timezone = config('radiopipe.pipeline.timezone', 'Asia/Tokyo');
 
         return is_string($timezone) && trim($timezone) !== '' ? trim($timezone) : 'Asia/Tokyo';
-    }
-
-    /**
-     * scheduled command に渡す character key を返します。
-     */
-    private function character(): ?string
-    {
-        $character = config('radiopipe.episode_schedule.character');
-
-        if (! is_string($character)) {
-            return null;
-        }
-
-        $character = trim($character);
-
-        return $character !== '' ? $character : null;
     }
 }

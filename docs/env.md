@@ -99,18 +99,20 @@ Phase 6 `Topic Editorial Evaluation` の analyzer 設定です。
 | `RADIOPIPE_SCRIPT_TARGET_MINUTES` | `15` | 目標 script 長の分数。 |
 | `RADIOPIPE_SCRIPT_OUTPUT_SCHEMA_VERSION` | `1.0` | script output schema version。 |
 
-## Episode Generation Schedule
+## Pipeline Schedule
 
-Laravel scheduler から `radiopipe:episodes:generate` を自動実行するための設定です。
+Laravel scheduler から `radiopipe:pipeline:compile` を短い間隔で自動実行するための設定です。
+scheduled pipeline は `radiopipe:topics:nominate` を先に実行し、成功した場合だけ `radiopipe:episodes:compile` を実行します。
 既定では無効です。hosting platform 側で Laravel scheduler を実行する設定は別途必要です。
 
 | 変数 | 既定値 | 説明 |
 |---|---|---|
-| `RADIOPIPE_EPISODE_SCHEDULE_ENABLED` | `false` | episode generation の scheduled task を登録するか。 |
-| `RADIOPIPE_EPISODE_SCHEDULE_TIME` | `07:00` | episode generation を日次実行する時刻。 |
-| `RADIOPIPE_EPISODE_SCHEDULE_TIMEZONE` | `Asia/Tokyo` | schedule 判定に使う timezone。 |
-| `RADIOPIPE_EPISODE_SCHEDULE_LIMIT` | `20` | scheduled command に渡す upstream article 取得上限。 |
-| `RADIOPIPE_EPISODE_SCHEDULE_CHARACTER` | empty | scheduled command に渡す character key。empty の場合は command 側の既定選択を使います。 |
+| `RADIOPIPE_PIPELINE_SCHEDULE_ENABLED` | `false` | pipeline compile の scheduled task を登録するか。 |
+| `RADIOPIPE_PIPELINE_INTERVAL_MINUTES` | `10` | `radiopipe:pipeline:compile` の実行間隔。対応値は `5`, `10`, `15`, `30`。 |
+| `RADIOPIPE_PIPELINE_TIMEZONE` | `Asia/Tokyo` | schedule 判定に使う timezone。 |
+| `RADIOPIPE_PIPELINE_LIMIT` | `20` | nomination / compilation に渡す candidate 取得上限。 |
+| `RADIOPIPE_PIPELINE_CHARACTER` | empty | compile command に渡す character key。empty の場合は command 側の既定選択を使います。 |
+| `RADIOPIPE_TOPIC_NOMINATION_THROTTLE_SECONDS` | `3600` | `topics:nominate` の成功後に再実行を skip する throttle lock TTL。`0` 以下で無効。 |
 
 ## Admin
 

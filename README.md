@@ -18,28 +18,36 @@ Inspect the configured scenario generation pipeline without persisting results:
 php artisan radiopipe:scenario:debug --limit=10 --character=neko_nyan_balanced_radio | jq
 ```
 
-Generate and persist an episode:
+Prepare reusable candidate topics:
 
 ```bash
-php artisan radiopipe:episodes:generate --character=neko_nyan_balanced_radio
-php artisan radiopipe:episodes:generate --dry-run | jq
+php artisan radiopipe:topics:nominate --limit=20
 ```
 
-These commands use configured providers, analyzers, and scenario generators. Debug and dry-run modes print JSON to stdout without saving. Episode generation persists an `Episode` unless `--dry-run` is used. Audio generation is deferred.
+Export or compile an episode from saved candidate topics:
+
+```bash
+php artisan radiopipe:episodes:export --character=neko_nyan_balanced_radio | jq
+php artisan radiopipe:episodes:compile --character=neko_nyan_balanced_radio
+php artisan radiopipe:pipeline:compile
+```
+
+`topics:nominate` fetches upstream records and persists `CandidateTopic` snapshots. `episodes:export` generates JSON from saved candidates without saving. `episodes:compile` persists a new `Episode` only when the candidate input fingerprint changed. Audio generation is deferred.
 
 ## Episode Generation Schedule
 
 Automatic episode generation is disabled by default. Enable and configure the Laravel scheduler with environment variables:
 
 ```env
-RADIOPIPE_EPISODE_SCHEDULE_ENABLED=true
-RADIOPIPE_EPISODE_SCHEDULE_TIME=07:00
-RADIOPIPE_EPISODE_SCHEDULE_TIMEZONE=Asia/Tokyo
-RADIOPIPE_EPISODE_SCHEDULE_LIMIT=20
-RADIOPIPE_EPISODE_SCHEDULE_CHARACTER=neko_nyan_balanced_radio
+RADIOPIPE_PIPELINE_SCHEDULE_ENABLED=true
+RADIOPIPE_PIPELINE_INTERVAL_MINUTES=10
+RADIOPIPE_PIPELINE_TIMEZONE=Asia/Tokyo
+RADIOPIPE_PIPELINE_LIMIT=20
+RADIOPIPE_PIPELINE_CHARACTER=neko_nyan_balanced_radio
+RADIOPIPE_TOPIC_NOMINATION_THROTTLE_SECONDS=3600
 ```
 
-When enabled, Laravel's scheduler runs `radiopipe:episodes:generate` once per day at the configured time and timezone, passes the configured `--limit`, and passes `--character` only when configured. The hosting platform still needs to run Laravel's scheduler; Laravel Cloud scheduler setup is a deployment concern for a later task.
+When enabled, Laravel's scheduler runs `radiopipe:pipeline:compile` at the configured short interval. The pipeline runs `radiopipe:topics:nominate` first, then `radiopipe:episodes:compile` only if nomination succeeds. Topic nomination uses a throttle lock controlled by `RADIOPIPE_TOPIC_NOMINATION_THROTTLE_SECONDS`. The hosting platform still needs to run Laravel's scheduler; Laravel Cloud scheduler setup is a deployment concern for a later task.
 
 ## Development Checks
 
