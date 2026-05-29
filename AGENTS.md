@@ -229,6 +229,24 @@ Keep formatting rules practical and Laravel-friendly.
 
 Do not introduce broad style changes unrelated to the current task.
 
+Admin UI DateTime Format
+
+Filament admin screens should display date-time values in a Japanese-readable fixed format:
+
+Y-m-d H:i:s T
+
+Apply this consistently to table columns, infolist/detail entries, analysis pages, dashboard widgets, and export payloads where date-time values are rendered for humans.
+
+Do not rely on Filament's default dateTime() display for admin-facing date-time values, because formats such as "May 29, 2026 13:30:59" are harder to scan for the primary users of this project.
+
+Filament Detail UI Readability
+
+Filament detail pages should prioritize scanability. Group compact metadata fields in card-like visual blocks, make wide sections span the full content width when useful, and preserve line breaks for long text.
+
+JSON snapshots shown in Filament detail pages should be read-only pretty JSON. Prefer existing Blade/PHP helpers over adding external JSON viewer packages. Use JSON_PRETTY_PRINT, JSON_UNESCAPED_UNICODE, and JSON_UNESCAPED_SLASHES.
+
+API token plain text values must be shown only once immediately after creation, preferably in a Filament modal. Do not show plain text tokens in list/detail pages, do not store them in the database, do not include them in exports, and do not log them. Token hashes must not be displayed in the UI.
+
 PHP Code Readability
 
 Prefer explicit class structure over compact syntax when defining application services.
