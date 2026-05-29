@@ -4,7 +4,7 @@ radiopipe の private Web API は Laravel Sanctum personal access token で保�
 
 ## API Token
 
-API token は Filament admin の `Operations > API Tokens` から管理できます。
+API token は Filament admin の `Settings > API Tokens` から管理できます。
 
 - token metadata の一覧表示
 - User に対する token 発行
