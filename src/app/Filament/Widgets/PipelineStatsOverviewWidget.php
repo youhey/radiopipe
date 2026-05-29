@@ -9,6 +9,7 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\HtmlString;
 
 /**
  * Dashboard に表示する pipeline activity の概要。
@@ -44,7 +45,7 @@ class PipelineStatsOverviewWidget extends StatsOverviewWidget
                 ->count();
 
         return [
-            Stat::make('Latest Episode', $latestEpisodeLabel)
+            Stat::make('Latest Episode', $this->latestEpisodeValue($latestEpisodeLabel))
                 ->icon(Heroicon::OutlinedRadio),
             Stat::make('Episodes / last 24h', DB::table('episodes')->where('created_at', '>=', $since)->count())
                 ->icon(Heroicon::OutlinedDocumentText),
@@ -70,5 +71,19 @@ class PipelineStatsOverviewWidget extends StatsOverviewWidget
                     ->orWhereNotNull('errors');
             })
             ->count();
+    }
+
+    /**
+     * 長い episode key を Stats card 内で省略表示できる HTML にする。
+     */
+    private function latestEpisodeValue(string $value): HtmlString
+    {
+        $escaped = htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+
+        return new HtmlString(sprintf(
+            '<span title="%s" style="display:block;max-width:100%%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:1rem;line-height:1.5rem;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;">%s</span>',
+            $escaped,
+            $escaped,
+        ));
     }
 }

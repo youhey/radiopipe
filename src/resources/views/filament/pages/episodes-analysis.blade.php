@@ -1,77 +1,75 @@
 <x-filament-panels::page>
-    <div class="space-y-6">
-        <section class="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+    @include('filament.pages.partials.analysis-styles')
+
+    <div class="rp-analysis">
+        <section class="rp-analysis__stats">
             @foreach ($this->stats() as $stat)
-                <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-gray-900">
-                    <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                        {{ $stat['label'] }}
-                    </div>
-                    <div class="mt-2 text-2xl font-semibold text-gray-950 dark:text-white">
-                        {{ $stat['value'] }}
-                    </div>
+                <div class="rp-analysis__stat">
+                    <div class="rp-analysis__stat-label">{{ $stat['label'] }}</div>
+                    <div class="rp-analysis__stat-value">{{ $stat['value'] }}</div>
                 </div>
             @endforeach
         </section>
 
-        <section class="grid gap-6 xl:grid-cols-2">
-            <div class="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-white/10 dark:bg-gray-900">
-                <div class="border-b border-gray-200 p-4 dark:border-white/10">
-                    <h2 class="text-base font-semibold text-gray-950 dark:text-white">Status distribution</h2>
+        <section class="rp-analysis__grid">
+            <div class="rp-analysis__panel">
+                <div class="rp-analysis__panel-header">
+                    <h2 class="rp-analysis__panel-title">Status distribution</h2>
                 </div>
-                <div class="divide-y divide-gray-100 dark:divide-white/10">
+                <div class="rp-analysis__list">
                     @forelse ($this->statusDistribution() as $row)
-                        <div class="flex items-center justify-between gap-4 p-4">
-                            <span class="text-sm text-gray-700 dark:text-gray-200">{{ $row['label'] }}</span>
-                            <span class="font-mono text-sm font-semibold text-gray-950 dark:text-white">{{ $row['value'] }}</span>
+                        <div class="rp-analysis__list-row">
+                            <span class="rp-analysis__list-label">{{ $row['label'] }}</span>
+                            <span class="rp-analysis__list-value">{{ $row['value'] }}</span>
                         </div>
                     @empty
-                        <div class="p-4 text-sm text-gray-500">No data</div>
+                        <div class="rp-analysis__empty">No data</div>
                     @endforelse
                 </div>
             </div>
 
-            <div class="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-white/10 dark:bg-gray-900">
-                <div class="border-b border-gray-200 p-4 dark:border-white/10">
-                    <h2 class="text-base font-semibold text-gray-950 dark:text-white">Character distribution</h2>
+            <div class="rp-analysis__panel">
+                <div class="rp-analysis__panel-header">
+                    <h2 class="rp-analysis__panel-title">Character distribution</h2>
                 </div>
-                <div class="divide-y divide-gray-100 dark:divide-white/10">
+                <div class="rp-analysis__list">
                     @forelse ($this->characterDistribution() as $row)
-                        <div class="flex items-center justify-between gap-4 p-4">
-                            <span class="text-sm text-gray-700 dark:text-gray-200">{{ $row['label'] }}</span>
-                            <span class="font-mono text-sm font-semibold text-gray-950 dark:text-white">{{ $row['value'] }}</span>
+                        <div class="rp-analysis__list-row">
+                            <span class="rp-analysis__list-label">{{ $row['label'] }}</span>
+                            <span class="rp-analysis__list-value">{{ $row['value'] }}</span>
                         </div>
                     @empty
-                        <div class="p-4 text-sm text-gray-500">No data</div>
+                        <div class="rp-analysis__empty">No data</div>
                     @endforelse
                 </div>
             </div>
         </section>
 
-        <section class="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-white/10 dark:bg-gray-900">
-            <div class="border-b border-gray-200 p-4 dark:border-white/10">
-                <h2 class="text-base font-semibold text-gray-950 dark:text-white">Recent Episodes</h2>
+        <section class="rp-analysis__panel">
+            <div class="rp-analysis__panel-header">
+                <h2 class="rp-analysis__panel-title">Recent Episodes</h2>
             </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm">
-                    <thead class="bg-gray-50 text-xs uppercase text-gray-500 dark:bg-white/5 dark:text-gray-400">
+            <div class="rp-analysis__table-wrap">
+                <table class="rp-analysis__table">
+                    <thead>
                         <tr>
-                            <th class="px-4 py-3">Episode key</th>
-                            <th class="px-4 py-3">Status</th>
-                            <th class="px-4 py-3">Title</th>
-                            <th class="px-4 py-3">Published at</th>
+                            <th>Episode key</th>
+                            <th>Status</th>
+                            <th>Title</th>
+                            <th>Published at</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-100 dark:divide-white/10">
+                    <tbody>
                         @forelse ($this->recentEpisodes() as $episode)
                             <tr>
-                                <td class="px-4 py-3 font-mono text-xs">{{ $episode['episode_key'] }}</td>
-                                <td class="px-4 py-3">{{ $episode['status'] }}</td>
-                                <td class="px-4 py-3">{{ $episode['title'] }}</td>
-                                <td class="px-4 py-3 font-mono text-xs">{{ $episode['published_at'] }}</td>
+                                <td class="rp-analysis__mono">{{ $episode['episode_key'] }}</td>
+                                <td>{{ $episode['status'] }}</td>
+                                <td>{{ $episode['title'] }}</td>
+                                <td class="rp-analysis__mono">{{ $episode['published_at'] }}</td>
                             </tr>
                         @empty
                             <tr>
-                                <td class="px-4 py-3 text-gray-500" colspan="4">No data</td>
+                                <td class="rp-analysis__empty" colspan="4">No data</td>
                             </tr>
                         @endforelse
                     </tbody>
