@@ -32,7 +32,7 @@ class ViewEpisode extends ViewRecord
 
                     return EpisodeResource::jsonDownloadResponse(
                         EpisodeResource::exportPayload($record),
-                        sprintf('%s.json', $record->episode_key),
+                        EpisodeResource::exportFilename($record),
                     );
                 }),
         ];

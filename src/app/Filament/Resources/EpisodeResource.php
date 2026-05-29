@@ -8,6 +8,7 @@ use App\Models\Episode;
 use App\Models\EpisodeTopic;
 use BackedEnum;
 use DateTimeInterface;
+use Filament\Actions\Action;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Infolists\Components\TextEntry;
@@ -110,6 +111,13 @@ class EpisodeResource extends Resource
             ])
             ->recordActions([
                 ViewAction::make(),
+                Action::make('export')
+                    ->label('Export')
+                    ->icon(Heroicon::OutlinedArrowDownTray)
+                    ->action(static fn (Episode $record): StreamedResponse => self::jsonDownloadResponse(
+                        self::exportPayload($record),
+                        self::exportFilename($record),
+                    )),
             ]);
     }
 
@@ -293,6 +301,14 @@ class EpisodeResource extends Resource
             $fileName,
             ['Content-Type' => 'application/json; charset=UTF-8'],
         );
+    }
+
+    /**
+     * Episode export 用のファイル名を返す。
+     */
+    public static function exportFilename(Episode $episode): string
+    {
+        return sprintf('%s.json', $episode->episode_key);
     }
 
     /**

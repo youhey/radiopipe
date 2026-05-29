@@ -7,7 +7,6 @@ use App\Models\EpisodeTopic;
 use Filament\Actions\Action;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Support\Icons\Heroicon;
-use Illuminate\Support\Str;
 use LogicException;
 
 /**
@@ -33,7 +32,7 @@ class ViewEpisodeTopic extends ViewRecord
 
                     return EpisodeTopicResource::jsonDownloadResponse(
                         EpisodeTopicResource::exportPayload($record),
-                        sprintf('episode-topic-%s.json', Str::slug(str_replace(':', '-', $record->topic_id))),
+                        EpisodeTopicResource::exportFilename($record),
                     );
                 }),
         ];

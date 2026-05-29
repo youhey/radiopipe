@@ -6,6 +6,7 @@ use App\Filament\Infolists\JsonPrettyEntry;
 use App\Filament\Resources\EpisodeTopicResource\Pages;
 use App\Models\EpisodeTopic;
 use BackedEnum;
+use Filament\Actions\Action;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Infolists\Components\TextEntry;
@@ -20,6 +21,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use JsonException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use UnitEnum;
@@ -116,6 +118,13 @@ class EpisodeTopicResource extends Resource
             ])
             ->recordActions([
                 ViewAction::make(),
+                Action::make('export')
+                    ->label('Export')
+                    ->icon(Heroicon::OutlinedArrowDownTray)
+                    ->action(static fn (EpisodeTopic $record): StreamedResponse => self::jsonDownloadResponse(
+                        self::exportPayload($record),
+                        self::exportFilename($record),
+                    )),
             ]);
     }
 
@@ -280,6 +289,14 @@ class EpisodeTopicResource extends Resource
     public static function jsonDownloadResponse(array $payload, string $fileName): StreamedResponse
     {
         return EpisodeResource::jsonDownloadResponse($payload, $fileName);
+    }
+
+    /**
+     * EpisodeTopic export 用のファイル名を返す。
+     */
+    public static function exportFilename(EpisodeTopic $topic): string
+    {
+        return sprintf('episode-topic-%s.json', Str::slug(str_replace(':', '-', $topic->topic_id)));
     }
 
     /**

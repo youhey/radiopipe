@@ -80,6 +80,22 @@ class EpisodeTopicResourceTest extends TestCase
         self::assertSame('dummy', data_get($payload, 'episode_topic.metadata.source'));
     }
 
+    public function testAuthorizedAdminCanExportEpisodeTopicJsonFromListTable(): void
+    {
+        $this->actingAsAdmin();
+        $topic = $this->episodeTopic([
+            'topic_id' => 'upstream:list-export-topic',
+            'title' => '一覧エクスポート対象トピック',
+        ]);
+
+        $component = Livewire::test(ListEpisodeTopics::class);
+        // @phpstan-ignore-next-line Filament の Livewire test macro を使用する。
+        $component->assertTableActionExists('export', record: $topic);
+        // @phpstan-ignore-next-line Filament の Livewire test macro を使用する。
+        $component->callTableAction('export', $topic);
+        $component->assertFileDownloaded('episode-topic-upstream-list-export-topic.json');
+    }
+
     public function testNonAdminUserCannotAccessEpisodeTopicList(): void
     {
         config(['radiopipe.admin.allowed_emails' => ['admin@example.test']]);

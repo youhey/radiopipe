@@ -68,6 +68,30 @@ class CharacterProfileResourceTest extends TestCase
         $component->assertCanSeeTableRecords([$profile]);
     }
 
+    public function testAuthorizedAdminCanExportCharacterProfileJsonFromListTable(): void
+    {
+        $this->actingAsAdmin();
+        $profile = CharacterProfile::factory()->create([
+            'character_key' => 'dummy_export_character',
+            'name' => 'エクスポート用キャラクター',
+            'metadata' => ['direction' => 'dummy_direction'],
+        ]);
+
+        $component = Livewire::test(ListCharacterProfiles::class);
+        // @phpstan-ignore-next-line Filament の Livewire test macro を使用する。
+        $component->assertTableActionExists('export', record: $profile);
+        // @phpstan-ignore-next-line Filament の Livewire test macro を使用する。
+        $component->callTableAction('export', $profile);
+        $component->assertFileDownloaded('character-profile-dummy_export_character.json');
+
+        $payload = CharacterProfileResource::exportPayload($profile);
+
+        self::assertSame('character_profile', $payload['type']);
+        self::assertSame('dummy_export_character', data_get($payload, 'character_profile.character_key'));
+        self::assertSame('エクスポート用キャラクター', data_get($payload, 'character_profile.name'));
+        self::assertSame('dummy_direction', data_get($payload, 'character_profile.metadata.direction'));
+    }
+
     public function testCreateFormStoresNewlineTextareaFieldsAsArrays(): void
     {
         $this->actingAsAdmin();

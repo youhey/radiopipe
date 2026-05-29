@@ -6,6 +6,8 @@ use App\Filament\Resources\CharacterProfileResource\Pages;
 use App\Models\CharacterProfile;
 use BackedEnum;
 use Closure;
+use DateTimeInterface;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -21,6 +23,8 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Contracts\Validation\ValidationRule;
+use JsonException;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use UnitEnum;
 
 /**
@@ -196,6 +200,13 @@ class CharacterProfileResource extends Resource
             ])
             ->recordActions([
                 EditAction::make(),
+                Action::make('export')
+                    ->label('Export')
+                    ->icon(Heroicon::OutlinedArrowDownTray)
+                    ->action(static fn (CharacterProfile $record): StreamedResponse => self::jsonDownloadResponse(
+                        self::exportPayload($record),
+                        self::exportFilename($record),
+                    )),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
@@ -306,6 +317,60 @@ class CharacterProfileResource extends Resource
     }
 
     /**
+     * CharacterProfile export 用の JSON 互換配列を返す。
+     *
+     * @return array<string, mixed>
+     */
+    public static function exportPayload(CharacterProfile $profile): array
+    {
+        return [
+            'schema_version' => '1.0',
+            'type' => 'character_profile',
+            'character_profile' => [
+                'id' => $profile->id,
+                'character_key' => $profile->character_key,
+                'name' => $profile->name,
+                'role' => $profile->role,
+                'personality' => $profile->personality,
+                'tone' => $profile->tone,
+                'speech_style' => $profile->speech_style,
+                'catchphrases' => $profile->catchphrases,
+                'style_examples' => $profile->style_examples,
+                'banned_phrases' => $profile->banned_phrases,
+                'disallowed_expressions' => $profile->disallowed_expressions,
+                'serious_topic_behavior' => $profile->serious_topic_behavior,
+                'content_policy' => $profile->content_policy,
+                'script_preferences' => $profile->script_preferences,
+                'metadata' => CharacterProfile::withFixedMetadata(self::stringKeyedArray($profile->metadata)),
+                'is_active' => $profile->is_active,
+                'sort_order' => $profile->sort_order,
+                'created_at' => self::dateTimeString($profile->created_at),
+                'updated_at' => self::dateTimeString($profile->updated_at),
+            ],
+        ];
+    }
+
+    /**
+     * JSON payload を download response として返す。
+     *
+     * @param array<string, mixed> $payload
+     *
+     * @throws JsonException
+     */
+    public static function jsonDownloadResponse(array $payload, string $fileName): StreamedResponse
+    {
+        return EpisodeResource::jsonDownloadResponse($payload, $fileName);
+    }
+
+    /**
+     * CharacterProfile export 用のファイル名を返す。
+     */
+    public static function exportFilename(CharacterProfile $profile): string
+    {
+        return sprintf('character-profile-%s.json', $profile->character_key);
+    }
+
+    /**
      * 改行配列用 Textarea を作成する。
      */
     private static function linesTextarea(string $name, int $maxLines): Textarea
@@ -388,6 +453,18 @@ class CharacterProfileResource extends Resource
             ),
             static fn (string $line): bool => $line !== '',
         ));
+    }
+
+    /**
+     * 日時値を export 用文字列へ変換する。
+     */
+    private static function dateTimeString(mixed $value): ?string
+    {
+        if ($value instanceof DateTimeInterface) {
+            return $value->format(DATE_ATOM);
+        }
+
+        return is_scalar($value) && (string) $value !== '' ? (string) $value : null;
     }
 
     /**
