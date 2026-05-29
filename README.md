@@ -104,7 +104,7 @@ Maintenance policy:
 
 Composer dependencies are managed under `src/`. The authoritative Composer files are `src/composer.json` and `src/composer.lock`; do not treat the repository root as the Composer project root.
 
-If a root-level `composer.lock` is added as a Laravel Cloud detection workaround, it is only a copied detection file. In that case, Dependabot may update only `src/composer.lock`, and a maintainer may need to refresh the copied root lock before merging a dependency pull request if CI or Laravel Cloud behavior requires it:
+If a root-level `composer.lock` is added as a Laravel Cloud detection workaround, it is only a copied detection file. CI does not compare it with `src/composer.lock`. In that case, Dependabot may update only `src/composer.lock`, and a maintainer may need to refresh the copied root lock only if Laravel Cloud detection requires it:
 
 ```bash
 cp src/composer.lock composer.lock

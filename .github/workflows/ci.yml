@@ -1,6 +1,6 @@
 name: CI
 
-on:
+"on":
   pull_request:
   push:
     branches:
@@ -15,10 +15,6 @@ jobs:
     name: PHP
     runs-on: ubuntu-latest
     timeout-minutes: 15
-
-    defaults:
-      run:
-        working-directory: src
 
     services:
       mysql:
@@ -38,11 +34,11 @@ jobs:
 
     env:
       APP_ENV: testing
-      APP_DEBUG: false
+      APP_DEBUG: "false"
       APP_KEY: base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
       DB_CONNECTION: mysql
       DB_HOST: 127.0.0.1
-      DB_PORT: 3306
+      DB_PORT: "3306"
       DB_DATABASE: radiopipe_test
       DB_USERNAME: radiopipe
       DB_PASSWORD: radiopipe
@@ -54,17 +50,22 @@ jobs:
       RADIOPIPE_WEATHER_PROVIDER: fake
       RADIOPIPE_NEWS_PROVIDER: fake
       RADIOPIPE_TOPIC_EDITORIAL_ANALYZER: fake
+      RADIOPIPE_SCENARIO_GENERATOR: fake
       OPENAI_API_KEY: ""
+
+    defaults:
+      run:
+        working-directory: src
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: "8.4"
-          extensions: bcmath, intl, pdo_mysql, zip, redis
+          extensions: bcmath, intl, pdo_mysql, zip, redis, dom, libxml
           coverage: none
 
       - name: Validate Composer metadata
@@ -73,13 +74,13 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --no-interaction --prefer-dist --no-progress
 
+      - name: Audit Composer dependencies
+        run: composer audit --no-interaction
+
       - name: Prepare Laravel application
         run: |
           cp .env.example .env
           php artisan key:generate --force
-
-      - name: Audit Composer dependencies
-        run: composer audit --no-interaction
 
       - name: Run migrations
         run: php artisan migrate --force
@@ -90,5 +91,5 @@ jobs:
       - name: Run PHPStan
         run: ./vendor/bin/phpstan analyse --memory-limit=2G
 
-      - name: Run PHP-CS-Fixer dry run
+      - name: Run PHP-CS-Fixer dry-run
         run: ./vendor/bin/php-cs-fixer fix --dry-run --diff --verbose
