@@ -28,6 +28,21 @@ class AnalysisPagesTest extends TestCase
         $this->actingAsAdmin();
         $this->seedPipelineData();
 
+        Episode::query()->create([
+            'episode_key' => 'episode_2026-05-29_0023_idigami_nyozomi_balanced_radio',
+            'date' => '2026-05-29',
+            'published_at' => now()->addMinute(),
+            'processed_at' => now()->addMinute(),
+            'character_key' => 'idigami_nyozomi_balanced_radio',
+            'status' => Episode::STATUS_COMPLETED,
+            'title' => '最新番組',
+            'language' => 'ja',
+            'target_duration_seconds' => 900,
+            'estimated_duration_seconds' => 120,
+            'scenario_json' => ['title' => '最新番組', 'sections' => []],
+            'metadata' => ['generator' => 'fake'],
+        ]);
+
         $this->get(Dashboard::getUrl(panel: 'admin'))
             ->assertOk();
 
@@ -35,6 +50,8 @@ class AnalysisPagesTest extends TestCase
         $component->assertSee('Pipeline health');
         $component->assertSee('Episodes / last 24h');
         $component->assertSee('Candidate Topics / last 24h');
+        $component->assertSee('episode 2026-05-29 00:23');
+        $component->assertSee('idigami nyozomi Balanced Radio');
 
         $cloudComponent = Livewire::test(CloudStatusWidget::class);
         $cloudComponent->assertSee('Laravel Cloud Status');

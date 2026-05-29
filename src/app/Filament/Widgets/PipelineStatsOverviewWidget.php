@@ -78,12 +78,72 @@ class PipelineStatsOverviewWidget extends StatsOverviewWidget
      */
     private function latestEpisodeValue(string $value): HtmlString
     {
-        $escaped = htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $label = $this->formatLatestEpisodeLabel($value);
+        $escapedTitle = htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $escapedPrimary = htmlspecialchars($label['primary'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $escapedSecondary = htmlspecialchars($label['secondary'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+
+        if ($escapedSecondary === '') {
+            return new HtmlString(sprintf(
+                '<span title="%s" style="display:block;max-width:100%%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:1rem;line-height:1.5rem;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;">%s</span>',
+                $escapedTitle,
+                $escapedPrimary,
+            ));
+        }
 
         return new HtmlString(sprintf(
-            '<span title="%s" style="display:block;max-width:100%%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:1rem;line-height:1.5rem;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;">%s</span>',
-            $escaped,
-            $escaped,
+            '<span title="%s" style="display:block;max-width:100%%;min-width:0;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;"><span style="display:block;max-width:100%%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:1rem;line-height:1.5rem;">%s</span><span style="display:block;max-width:100%%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:1rem;line-height:1.5rem;">%s</span></span>',
+            $escapedTitle,
+            $escapedPrimary,
+            $escapedSecondary,
         ));
+    }
+
+    /**
+     * episode key を dashboard 用の短い複数行表示に整形する。
+     *
+     * @return array{primary: string, secondary: string}
+     */
+    private function formatLatestEpisodeLabel(string $value): array
+    {
+        if ($value === 'None') {
+            return [
+                'primary' => 'None',
+                'secondary' => '',
+            ];
+        }
+
+        if (preg_match('/^episode_(\d{4}-\d{2}-\d{2})_(\d{4})(\d{2})?_(.+)$/', $value, $matches) !== 1) {
+            return [
+                'primary' => $value,
+                'secondary' => '',
+            ];
+        }
+
+        $time = sprintf('%s:%s', substr($matches[2], 0, 2), substr($matches[2], 2, 2));
+
+        if ($matches[3] !== '') {
+            $time .= ':' . $matches[3];
+        }
+
+        return [
+            'primary' => sprintf('episode %s %s', $matches[1], $time),
+            'secondary' => $this->formatCharacterKey($matches[4]),
+        ];
+    }
+
+    /**
+     * character key を dashboard 上で読みやすい空白区切りにする。
+     */
+    private function formatCharacterKey(string $value): string
+    {
+        $words = explode('_', $value);
+        $formatted = [];
+
+        foreach ($words as $word) {
+            $formatted[] = in_array($word, ['balanced', 'radio'], true) ? ucfirst($word) : $word;
+        }
+
+        return implode(' ', $formatted);
     }
 }
