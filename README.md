@@ -77,7 +77,9 @@ Character profiles are managed from the Filament admin panel as master data for 
 
 Topic screening keyword rules are also managed from the Filament admin panel. The database is the source of truth; default limitation and sensitive keyword rules are seeded by `TopicScreeningKeywordRuleSeeder`, and config fallback keyword lists are intentionally not used.
 
-Generated Episodes and Episode Topics can be inspected from the Filament admin panel under Analysis. These resources are read-only and are intended for debugging and data analysis; manual editing of generated records is intentionally not supported yet.
+Generated Episodes, Episode Topics, and Candidate Topics can be inspected from the Filament admin panel under Content. These generated artifact resources are read-only and are intended for debugging and data analysis; manual editing of generated records is intentionally not supported yet.
+
+The Dashboard shows high-level pipeline health. Episodes Analysis and Candidate Topics Analysis under Analysis provide lightweight summaries for episode generation results and topic nomination quality.
 
 ## Branch And CI Workflow
 

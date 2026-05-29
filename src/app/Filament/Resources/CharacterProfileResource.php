@@ -34,7 +34,7 @@ class CharacterProfileResource extends Resource
 {
     protected static ?string $model = CharacterProfile::class;
 
-    protected static BackedEnum|string|null $navigationIcon = Heroicon::OutlinedFaceSmile;
+    protected static BackedEnum|string|null $navigationIcon = Heroicon::OutlinedUserCircle;
 
     protected static string|UnitEnum|null $navigationGroup = 'Configuration';
 
