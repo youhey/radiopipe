@@ -67,6 +67,25 @@ class EpisodeResourceTest extends TestCase
         $component->assertSee('ダミートピック');
     }
 
+    public function testEpisodeDateUsesIsoDateFormatInListAndView(): void
+    {
+        $this->actingAsAdmin();
+        $episode = $this->episode([
+            'episode_key' => 'episode_date_format_test',
+            'date' => '2026-04-03',
+        ]);
+
+        $list = Livewire::test(ListEpisodes::class);
+        $list->assertSee('2026-04-03');
+        $list->assertDontSee('Apr 3, 2026');
+        $list->assertDontSee('April 3, 2026');
+
+        $view = Livewire::test(ViewEpisode::class, ['record' => $episode->getKey()]);
+        $view->assertSee('2026-04-03');
+        $view->assertDontSee('Apr 3, 2026');
+        $view->assertDontSee('April 3, 2026');
+    }
+
     public function testAuthorizedAdminCanExportEpisodeJsonFromView(): void
     {
         $this->actingAsAdmin();

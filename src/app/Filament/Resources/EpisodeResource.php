@@ -36,6 +36,8 @@ use UnitEnum;
  */
 class EpisodeResource extends Resource
 {
+    public const DATE_FORMAT = 'Y-m-d';
+
     public const DATETIME_FORMAT = 'Y-m-d H:i:s T';
 
     protected static ?string $model = Episode::class;
@@ -64,7 +66,7 @@ class EpisodeResource extends Resource
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('date')
-                    ->date()
+                    ->date(self::DATE_FORMAT)
                     ->sortable(),
                 TextColumn::make('published_at')
                     ->dateTime(self::DATETIME_FORMAT)
@@ -138,7 +140,7 @@ class EpisodeResource extends Resource
                         self::summaryEntry('status')
                             ->badge(),
                         self::summaryEntry('date')
-                            ->date(),
+                            ->date(self::DATE_FORMAT),
                         self::summaryEntry('published_at')
                             ->dateTime(self::DATETIME_FORMAT),
                         self::summaryEntry('processed_at')
