@@ -33,6 +33,7 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
+            ->favicon(asset('favicon.ico'))
             ->login(static fn () => redirect()->route('auth.google.redirect'))
             ->colors([
                 'primary' => Color::Amber,
