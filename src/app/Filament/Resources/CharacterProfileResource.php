@@ -30,9 +30,11 @@ class CharacterProfileResource extends Resource
 {
     protected static ?string $model = CharacterProfile::class;
 
-    protected static BackedEnum|string|null $navigationIcon = Heroicon::OutlinedUserCircle;
+    protected static BackedEnum|string|null $navigationIcon = Heroicon::OutlinedFaceSmile;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Master Data';
+    protected static string|UnitEnum|null $navigationGroup = 'Configuration';
+
+    protected static ?int $navigationSort = 10;
 
     protected static ?string $navigationLabel = 'Character Profiles';
 

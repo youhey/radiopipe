@@ -21,6 +21,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\HtmlString;
 use UnitEnum;
 
 /**
@@ -30,9 +31,9 @@ class EpisodeResource extends Resource
 {
     protected static ?string $model = Episode::class;
 
-    protected static BackedEnum|string|null $navigationIcon = Heroicon::OutlinedDocumentText;
+    protected static BackedEnum|string|null $navigationIcon = Heroicon::OutlinedRadio;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Analysis';
+    protected static string|UnitEnum|null $navigationGroup = 'Content';
 
     protected static ?int $navigationSort = 10;
 
@@ -117,48 +118,54 @@ class EpisodeResource extends Resource
             ->components([
                 Section::make('Basic metadata')
                     ->schema([
-                        TextEntry::make('episode_key'),
-                        TextEntry::make('status')
+                        self::summaryEntry('episode_key'),
+                        self::summaryEntry('status')
                             ->badge(),
-                        TextEntry::make('date')
+                        self::summaryEntry('date')
                             ->date(),
-                        TextEntry::make('published_at')
+                        self::summaryEntry('published_at')
                             ->dateTime(),
-                        TextEntry::make('processed_at')
+                        self::summaryEntry('processed_at')
                             ->dateTime(),
-                        TextEntry::make('character_key'),
-                        TextEntry::make('characterProfile.name')
+                        self::summaryEntry('character_key'),
+                        self::summaryEntry('characterProfile.name')
                             ->label('Character'),
-                        TextEntry::make('title'),
-                        TextEntry::make('language'),
-                        TextEntry::make('target_duration_seconds')
+                        self::summaryEntry('title'),
+                        self::summaryEntry('language'),
+                        self::summaryEntry('target_duration_seconds')
                             ->numeric(),
-                        TextEntry::make('estimated_duration_seconds')
+                        self::summaryEntry('estimated_duration_seconds')
                             ->numeric(),
                     ])
-                    ->columns(3),
+                    ->columns(4)
+                    ->columnSpanFull(),
                 Section::make('Scenario summary')
                     ->schema([
-                        TextEntry::make('scenario_json.title')
+                        self::summaryEntry('scenario_json.title')
                             ->label('Scenario title'),
-                        TextEntry::make('scenario_json.language')
+                        self::summaryEntry('scenario_json.language')
                             ->label('Scenario language'),
                         TextEntry::make('scenario_json.script_text')
                             ->label('Scenario script text')
+                            ->formatStateUsing(static fn (mixed $state): HtmlString => self::lineBreakHtml($state))
+                            ->extraEntryWrapperAttributes(self::summaryEntryWrapperAttributes())
                             ->columnSpanFull(),
                         TextEntry::make('topics_summary')
                             ->label('Related episode topics')
                             ->state(static fn (Episode $record): string => self::topicsSummary($record))
                             ->fontFamily(FontFamily::Mono)
+                            ->extraEntryWrapperAttributes(self::summaryEntryWrapperAttributes())
                             ->columnSpanFull(),
                     ])
-                    ->columns(2),
+                    ->columns(2)
+                    ->columnSpanFull(),
                 Section::make('Raw JSON')
                     ->schema([
                         self::jsonEntry('scenario_json', 'Raw scenario_json'),
                         self::jsonEntry('errors', 'Errors'),
                         self::jsonEntry('metadata', 'Raw metadata'),
-                    ]),
+                    ])
+                    ->columnSpanFull(),
             ]);
     }
 
@@ -226,6 +233,7 @@ class EpisodeResource extends Resource
             ->label($label)
             ->formatStateUsing(static fn (mixed $state): string => self::prettyJson($state))
             ->fontFamily(FontFamily::Mono)
+            ->extraEntryWrapperAttributes(self::summaryEntryWrapperAttributes())
             ->copyable()
             ->columnSpanFull();
     }
@@ -242,6 +250,38 @@ class EpisodeResource extends Resource
         $json = json_encode($value, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
         return is_string($json) ? $json : '';
+    }
+
+    /**
+     * 要約項目を視覚的に区切る wrapper 属性を返す。
+     *
+     * @return array<string, string>
+     */
+    public static function summaryEntryWrapperAttributes(): array
+    {
+        return [
+            'class' => 'rounded-xl border border-gray-200 bg-gray-50 p-4 shadow-sm dark:border-white/10 dark:bg-white/5',
+        ];
+    }
+
+    /**
+     * 要約項目用のカード状 entry を返す。
+     */
+    private static function summaryEntry(string $name): TextEntry
+    {
+        return TextEntry::make($name)
+            ->extraEntryWrapperAttributes(self::summaryEntryWrapperAttributes());
+    }
+
+    /**
+     * 改行を HTML 表示用に変換する。
+     */
+    private static function lineBreakHtml(mixed $value): HtmlString
+    {
+        $text = is_scalar($value) ? (string) $value : '';
+        $escaped = htmlspecialchars($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+
+        return new HtmlString(nl2br($escaped, false));
     }
 
     /**

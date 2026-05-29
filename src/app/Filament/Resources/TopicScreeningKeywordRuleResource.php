@@ -33,11 +33,13 @@ class TopicScreeningKeywordRuleResource extends Resource
 {
     protected static ?string $model = TopicScreeningKeywordRule::class;
 
-    protected static BackedEnum|string|null $navigationIcon = Heroicon::OutlinedShieldCheck;
+    protected static BackedEnum|string|null $navigationIcon = Heroicon::OutlinedAdjustmentsHorizontal;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Master Data';
+    protected static string|UnitEnum|null $navigationGroup = 'Configuration';
 
-    protected static ?string $navigationLabel = 'Topic Screening Keyword Rules';
+    protected static ?int $navigationSort = 20;
+
+    protected static ?string $navigationLabel = 'Screening Rules';
 
     protected static ?string $modelLabel = 'Topic Screening Keyword Rule';
 

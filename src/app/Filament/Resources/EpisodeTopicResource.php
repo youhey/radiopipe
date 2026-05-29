@@ -28,9 +28,9 @@ class EpisodeTopicResource extends Resource
 {
     protected static ?string $model = EpisodeTopic::class;
 
-    protected static BackedEnum|string|null $navigationIcon = Heroicon::OutlinedClipboardDocumentList;
+    protected static BackedEnum|string|null $navigationIcon = Heroicon::OutlinedQueueList;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Analysis';
+    protected static string|UnitEnum|null $navigationGroup = 'Content';
 
     protected static ?int $navigationSort = 20;
 
@@ -125,32 +125,32 @@ class EpisodeTopicResource extends Resource
             ->components([
                 Section::make('Basic topic metadata')
                     ->schema([
-                        TextEntry::make('episode_id')
+                        self::summaryEntry('episode_id')
                             ->numeric(),
-                        TextEntry::make('episode.episode_key')
+                        self::summaryEntry('episode.episode_key')
                             ->label('Episode key'),
-                        TextEntry::make('topic_id'),
-                        TextEntry::make('title')
+                        self::summaryEntry('topic_id'),
+                        self::summaryEntry('title')
                             ->columnSpanFull(),
-                        TextEntry::make('screening_status')
+                        self::summaryEntry('screening_status')
                             ->badge(),
-                        TextEntry::make('editorial_status')
+                        self::summaryEntry('editorial_status')
                             ->badge(),
-                        TextEntry::make('scenario_selection_status')
+                        self::summaryEntry('scenario_selection_status')
                             ->badge(),
-                        TextEntry::make('sort_order')
+                        self::summaryEntry('sort_order')
                             ->numeric(),
-                        TextEntry::make('created_at')
+                        self::summaryEntry('created_at')
                             ->dateTime(),
                     ])
                     ->columns(3),
                 Section::make('Upstream/source metadata')
                     ->schema([
-                        TextEntry::make('upstream_provider'),
-                        TextEntry::make('upstream_id'),
-                        TextEntry::make('source_name'),
-                        TextEntry::make('source_type'),
-                        TextEntry::make('url')
+                        self::summaryEntry('upstream_provider'),
+                        self::summaryEntry('upstream_id'),
+                        self::summaryEntry('source_name'),
+                        self::summaryEntry('source_type'),
+                        self::summaryEntry('url')
                             ->url(static fn (?string $state): ?string => $state)
                             ->openUrlInNewTab()
                             ->columnSpanFull(),
@@ -163,7 +163,8 @@ class EpisodeTopicResource extends Resource
                         EpisodeResource::jsonEntry('editorial_json', 'Editorial JSON'),
                         EpisodeResource::jsonEntry('scenario_selection_json', 'Scenario selection JSON'),
                         EpisodeResource::jsonEntry('metadata', 'Metadata JSON'),
-                    ]),
+                    ])
+                    ->columnSpanFull(),
             ]);
     }
 
@@ -220,6 +221,15 @@ class EpisodeTopicResource extends Resource
     public static function canDeleteAny(): bool
     {
         return false;
+    }
+
+    /**
+     * 要約項目用のカード状 entry を返す。
+     */
+    private static function summaryEntry(string $name): TextEntry
+    {
+        return TextEntry::make($name)
+            ->extraEntryWrapperAttributes(EpisodeResource::summaryEntryWrapperAttributes());
     }
 
     /**
