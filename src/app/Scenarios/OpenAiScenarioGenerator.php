@@ -9,6 +9,7 @@ use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use InvalidArgumentException;
 use JsonException;
+use stdClass;
 use ValueError;
 
 /**
@@ -261,7 +262,7 @@ class OpenAiScenarioGenerator implements ScenarioGenerator
                                 'type' => 'object',
                                 'additionalProperties' => false,
                                 'required' => [],
-                                'properties' => [],
+                                'properties' => new stdClass(),
                             ],
                         ],
                     ],

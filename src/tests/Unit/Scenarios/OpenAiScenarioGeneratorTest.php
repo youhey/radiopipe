@@ -95,6 +95,31 @@ class OpenAiScenarioGeneratorTest extends TestCase
         });
     }
 
+    public function testItSendsEmptySchemaPropertiesAsObject(): void
+    {
+        $this->profile();
+        Http::fake([
+            'https://api.openai.com/v1/responses' => Http::response($this->openAiResponse($this->validScenarioPayload()), 200),
+        ]);
+
+        $this->generator()->generate($this->input());
+
+        Http::assertSent(function (Request $request): bool {
+            $payload = $request->data();
+            $text = is_array($payload['text'] ?? null) ? $payload['text'] : null;
+            $format = is_array($text) && is_array($text['format'] ?? null) ? $text['format'] : null;
+            $schema = is_array($format) ? ($format['schema'] ?? null) : null;
+
+            if (! is_array($schema)) {
+                return false;
+            }
+
+            $encoded = json_encode($schema, JSON_THROW_ON_ERROR);
+
+            return str_contains($encoded, '"metadata":{"type":"object","additionalProperties":false,"required":[],"properties":{}}');
+        });
+    }
+
     public function testItRejectsInvalidJson(): void
     {
         $this->profile();
