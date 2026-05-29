@@ -16,6 +16,9 @@ use stdClass;
  */
 class EpisodeDetailResource extends JsonResource
 {
+    /** @var string|null JSON response のトップレベル wrapper */
+    public static $wrap = 'episode';
+
     /**
      * Episode detail を client 向けに変換する。
      *
@@ -34,7 +37,7 @@ class EpisodeDetailResource extends JsonResource
                 'name' => $this->characterProfile?->name,
             ],
             'language' => $this->language,
-            'scenario' => $this->scenario_json ?? new stdClass(),
+            'scenario_json' => $this->scenario_json ?? new stdClass(),
             'topics' => $this->topics
                 ->map(fn (EpisodeTopic $topic): array => $this->topicPayload($topic))
                 ->values()

@@ -47,15 +47,16 @@ class EpisodeApiTest extends TestCase
         $this->withReadToken()
             ->getJson('/api/episodes')
             ->assertOk()
-            ->assertJsonPath('data.0.episode_key', 'episode_completed')
-            ->assertJsonPath('data.0.character.key', 'dummy_character')
-            ->assertJsonPath('data.0.character.name', 'ダミーキャラクター')
+            ->assertJsonMissingPath('data')
+            ->assertJsonPath('episodes.0.episode_key', 'episode_completed')
+            ->assertJsonPath('episodes.0.character.key', 'dummy_character')
+            ->assertJsonPath('episodes.0.character.name', 'ダミーキャラクター')
             ->assertJsonPath('meta.count', 1)
             ->assertJsonPath('meta.limit', 100)
-            ->assertJsonMissingPath('data.0.scenario')
-            ->assertJsonMissingPath('data.0.scenario_json')
-            ->assertJsonMissingPath('data.0.topics')
-            ->assertJsonMissingPath('data.0.metadata');
+            ->assertJsonMissingPath('episodes.0.scenario')
+            ->assertJsonMissingPath('episodes.0.scenario_json')
+            ->assertJsonMissingPath('episodes.0.topics')
+            ->assertJsonMissingPath('episodes.0.metadata');
     }
 
     public function testIndexSupportsLimitStatusCharacterAndDateFilters(): void
@@ -79,7 +80,7 @@ class EpisodeApiTest extends TestCase
         $this->withReadToken()
             ->getJson('/api/episodes?limit=1&character=dummy_character&from=2026-05-29&to=2026-05-30T23:59:59')
             ->assertOk()
-            ->assertJsonPath('data.0.episode_key', 'episode_c')
+            ->assertJsonPath('episodes.0.episode_key', 'episode_c')
             ->assertJsonPath('meta.count', 1)
             ->assertJsonPath('meta.limit', 1);
     }
@@ -117,20 +118,22 @@ class EpisodeApiTest extends TestCase
         $this->withReadToken()
             ->getJson('/api/episodes/latest')
             ->assertOk()
-            ->assertJsonPath('data.episode_key', 'episode_latest')
-            ->assertJsonPath('data.scenario.title', 'API テスト番組')
-            ->assertJsonPath('data.topics.0.topic_id', 'upstream:236')
-            ->assertJsonPath('data.topics.0.status', 'used_in_scenario')
-            ->assertJsonPath('data.topics.0.title', 'Episode topic title')
-            ->assertJsonPath('data.topics.0.summary', 'Localized summary')
-            ->assertJsonPath('data.topics.0.why_it_matters', 'Localized why it matters')
-            ->assertJsonPath('data.topics.0.discussion_url', 'https://news.ycombinator.com/item?id=236')
-            ->assertJsonMissingPath('data.topics.0.topic_draft_json')
-            ->assertJsonMissingPath('data.topics.0.screening_json')
-            ->assertJsonMissingPath('data.topics.0.editorial_json')
-            ->assertJsonMissingPath('data.topics.0.scenario_selection_json')
-            ->assertJsonMissingPath('data.errors')
-            ->assertJsonMissingPath('data.metadata');
+            ->assertJsonMissingPath('data')
+            ->assertJsonPath('episode.episode_key', 'episode_latest')
+            ->assertJsonPath('episode.scenario_json.title', 'API テスト番組')
+            ->assertJsonPath('episode.topics.0.topic_id', 'upstream:236')
+            ->assertJsonPath('episode.topics.0.status', 'used_in_scenario')
+            ->assertJsonPath('episode.topics.0.title', 'Episode topic title')
+            ->assertJsonPath('episode.topics.0.summary', 'Localized summary')
+            ->assertJsonPath('episode.topics.0.why_it_matters', 'Localized why it matters')
+            ->assertJsonPath('episode.topics.0.discussion_url', 'https://news.ycombinator.com/item?id=236')
+            ->assertJsonMissingPath('episode.scenario')
+            ->assertJsonMissingPath('episode.topics.0.topic_draft_json')
+            ->assertJsonMissingPath('episode.topics.0.screening_json')
+            ->assertJsonMissingPath('episode.topics.0.editorial_json')
+            ->assertJsonMissingPath('episode.topics.0.scenario_selection_json')
+            ->assertJsonMissingPath('episode.errors')
+            ->assertJsonMissingPath('episode.metadata');
     }
 
     public function testLatestReturnsNotFoundWhenNoCompletedEpisodeExists(): void
@@ -156,9 +159,10 @@ class EpisodeApiTest extends TestCase
         $this->withReadToken()
             ->getJson('/api/episodes/episode_show')
             ->assertOk()
-            ->assertJsonPath('data.episode_key', 'episode_show')
-            ->assertJsonPath('data.topics.0.status', 'selected_not_used')
-            ->assertJsonPath('data.topics.0.sort_order', 2);
+            ->assertJsonMissingPath('data')
+            ->assertJsonPath('episode.episode_key', 'episode_show')
+            ->assertJsonPath('episode.topics.0.status', 'selected_not_used')
+            ->assertJsonPath('episode.topics.0.sort_order', 2);
     }
 
     public function testShowReturnsNotFoundForFailedEpisode(): void
@@ -187,7 +191,7 @@ class EpisodeApiTest extends TestCase
         $this->withReadToken()
             ->getJson('/api/episodes/latest')
             ->assertOk()
-            ->assertJsonPath('data.episode_key', 'episode_not_latest');
+            ->assertJsonPath('episode.episode_key', 'episode_not_latest');
     }
 
     /**

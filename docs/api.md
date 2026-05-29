@@ -50,7 +50,7 @@ Response example:
 
 ```json
 {
-  "data": [
+  "episodes": [
     {
       "episode_key": "episode_2026-05-29_0700_neko_nyan_001",
       "status": "completed",
@@ -85,7 +85,7 @@ Detail response example:
 
 ```json
 {
-  "data": {
+  "episode": {
     "episode_key": "episode_2026-05-29_0700_neko_nyan_001",
     "status": "completed",
     "published_at": "2026-05-29T07:00:00+09:00",
@@ -96,7 +96,9 @@ Detail response example:
       "name": "ねこにゃん"
     },
     "language": "ja",
-    "scenario": {},
+    "scenario_json": {
+      "sections": []
+    },
     "topics": [
       {
         "topic_id": "upstream:236",

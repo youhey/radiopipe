@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -23,7 +22,7 @@ class EpisodeController extends Controller
     /**
      * Episode の軽量一覧を返す。
      */
-    public function index(Request $request): AnonymousResourceCollection
+    public function index(Request $request): JsonResponse
     {
         /** @var array{limit?: int|string, status?: string, character?: string, from?: string, to?: string} $validated */
         $validated = Validator::make($request->query(), [
@@ -60,13 +59,13 @@ class EpisodeController extends Controller
 
         $episodes = $query->get();
 
-        return EpisodeIndexResource::collection($episodes)
-            ->additional([
-                'meta' => [
-                    'count' => $episodes->count(),
-                    'limit' => $limit,
-                ],
-            ]);
+        return response()->json([
+            'episodes' => EpisodeIndexResource::collection($episodes)->resolve($request),
+            'meta' => [
+                'count' => $episodes->count(),
+                'limit' => $limit,
+            ],
+        ]);
     }
 
     /**
