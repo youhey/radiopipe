@@ -6,14 +6,14 @@ use App\ApiTokens\ApiTokenService;
 use App\Filament\Resources\ApiTokens\ApiTokenResource;
 use App\Models\User;
 use Filament\Actions\Action;
+use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\Pages\ListRecords;
-use Filament\Schemas\Components\EmbeddedTable;
-use Filament\Schemas\Components\View;
-use Filament\Schemas\Schema;
+use Filament\Support\Enums\Width;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Validator;
 
 /**
@@ -21,34 +21,7 @@ use Illuminate\Support\Facades\Validator;
  */
 class ListApiTokens extends ListRecords
 {
-    /** @var string|null 発行直後だけ表示する plain text token */
-    public ?string $createdPlainTextToken = null;
-
-    /** @var string|null 発行した token name */
-    public ?string $createdTokenName = null;
-
-    /** @var string|null 発行対象 User email */
-    public ?string $createdUserEmail = null;
-
     protected static string $resource = ApiTokenResource::class;
-
-    /**
-     * token 発行結果と一覧テーブルを表示する。
-     */
-    public function content(Schema $schema): Schema
-    {
-        return $schema
-            ->components([
-                View::make('filament.resources.api-tokens.created-token')
-                    ->viewData(fn (): array => [
-                        'plainTextToken' => $this->createdPlainTextToken,
-                        'tokenName' => $this->createdTokenName,
-                        'userEmail' => $this->createdUserEmail,
-                    ])
-                    ->hidden(fn (): bool => $this->createdPlainTextToken === null),
-                EmbeddedTable::make(),
-            ]);
-    }
 
     /**
      * ヘッダーに表示する操作を返す。
@@ -92,7 +65,7 @@ class ListApiTokens extends ListRecords
                     ->default($tokens->defaultAbilities())
                     ->required(),
             ])
-            ->action(function (array $data, ApiTokenService $tokens): void {
+            ->action(function (array $data, ApiTokenService $tokens, HasActions $livewire): void {
                 $validator = Validator::make($data, [
                     'user_id' => ['required', 'integer', 'exists:users,id'],
                     'token_name' => ['required', 'string', 'max:255'],
@@ -109,10 +82,28 @@ class ListApiTokens extends ListRecords
                     abilities: $this->arrayData($data, 'abilities'),
                 );
 
-                $this->createdPlainTextToken = $createdToken->plainTextToken;
-                $this->createdTokenName = $createdToken->accessToken->name;
-                $this->createdUserEmail = $user->email;
+                $livewire->mountAction('showCreatedApiToken', arguments: [
+                    'plainTextToken' => $createdToken->plainTextToken,
+                    'tokenName' => $createdToken->accessToken->name,
+                    'userEmail' => $user->email,
+                ]);
             })
+            ->registerModalActions([
+                Action::make('showCreatedApiToken')
+                    ->modalHeading('API token created')
+                    ->modalDescription('Copy this token now. It will not be shown again.')
+                    ->modalContent(fn (array $arguments): View => view('filament.resources.api-tokens.created-token', [
+                        'plainTextToken' => $this->stringArgument($arguments, 'plainTextToken'),
+                        'tokenName' => $this->stringArgument($arguments, 'tokenName'),
+                        'userEmail' => $this->stringArgument($arguments, 'userEmail'),
+                    ]))
+                    ->modalWidth(Width::Large)
+                    ->closeModalByClickingAway(false)
+                    ->closeModalByEscaping(false)
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Close')
+                    ->cancelParentActions(),
+            ])
             ->successNotificationTitle('API token created.');
     }
 
@@ -187,5 +178,17 @@ class ListApiTokens extends ListRecords
         $value = $data[$key] ?? [];
 
         return is_array($value) ? array_values($value) : [];
+    }
+
+    /**
+     * modal action arguments から string 値を取り出す。
+     *
+     * @param array<array-key, mixed> $arguments
+     */
+    private function stringArgument(array $arguments, string $key): string
+    {
+        $value = $arguments[$key] ?? '';
+
+        return is_string($value) ? $value : '';
     }
 }

@@ -62,12 +62,14 @@ class ApiTokenResourceTest extends TestCase
 
         self::assertSame('radiopipe-api', $token->name);
         self::assertSame([ApiTokenService::ABILITY_EPISODES_READ], $token->abilities);
-        $instance = $component->instance();
-
-        self::assertInstanceOf(ListApiTokens::class, $instance);
-        self::assertNotNull($instance->createdPlainTextToken);
-        self::assertStringContainsString('|', $instance->createdPlainTextToken);
-        $component->assertSee('Copy this token now. It will not be shown again.');
+        // @phpstan-ignore-next-line Filament の Livewire test macro を使用する。
+        $component->assertActionMounted('showCreatedApiToken');
+        // @phpstan-ignore-next-line Filament の Livewire test macro を使用する。
+        $component->assertMountedActionModalSee('Copy this token now. It will not be shown again.');
+        // @phpstan-ignore-next-line Filament の Livewire test macro を使用する。
+        $component->assertMountedActionModalSee('api-user@example.test');
+        // @phpstan-ignore-next-line Filament の Livewire test macro を使用する。
+        $component->assertMountedActionModalSee('radiopipe-api');
     }
 
     public function testTokenListDoesNotDisplayPlainTextTokenOrTokenHash(): void
