@@ -41,6 +41,7 @@ class AdminPanelProvider extends PanelProvider
             ->navigationGroups([
                 'Content',
                 'Configuration',
+                'Operations',
                 'Analysis',
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')

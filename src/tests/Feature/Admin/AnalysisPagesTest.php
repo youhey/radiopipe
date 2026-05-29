@@ -27,6 +27,10 @@ class AnalysisPagesTest extends TestCase
     {
         $this->actingAsAdmin();
         $this->seedPipelineData();
+        config([
+            'services.laravel_cloud.api_token' => null,
+            'services.laravel_cloud.environment_id' => null,
+        ]);
 
         Episode::query()->create([
             'episode_key' => 'episode_2026-05-29_0023_idigami_nyozomi_balanced_radio',

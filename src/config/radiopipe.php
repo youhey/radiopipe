@@ -17,6 +17,16 @@ return [
         ],
     ],
 
+    'api_tokens' => [
+        'default_name' => 'radiopipe-api',
+        'allowed_abilities' => [
+            'episodes:read',
+        ],
+        'default_abilities' => [
+            'episodes:read',
+        ],
+    ],
+
     'upstream' => [
         'provider' => env('RADIOPIPE_UPSTREAM_PROVIDER', 'fake'),
         'url' => env('RADIOPIPE_UPSTREAM_URL'),
