@@ -80,13 +80,13 @@ class CandidateTopicResource extends Resource
                     ->numeric()
                     ->sortable(),
                 TextColumn::make('article_published_at')
-                    ->dateTime()
+                    ->dateTime(EpisodeResource::DATETIME_FORMAT)
                     ->sortable(),
                 TextColumn::make('processed_at')
-                    ->dateTime()
+                    ->dateTime(EpisodeResource::DATETIME_FORMAT)
                     ->sortable(),
                 TextColumn::make('updated_at')
-                    ->dateTime()
+                    ->dateTime(EpisodeResource::DATETIME_FORMAT)
                     ->sortable(),
             ])
             ->filters([
@@ -134,9 +134,9 @@ class CandidateTopicResource extends Resource
                         self::summaryEntry('editorial_score')
                             ->numeric(),
                         self::summaryEntry('processed_at')
-                            ->dateTime(),
+                            ->dateTime(EpisodeResource::DATETIME_FORMAT),
                         self::summaryEntry('updated_at')
-                            ->dateTime(),
+                            ->dateTime(EpisodeResource::DATETIME_FORMAT),
                     ])
                     ->columns(3)
                     ->columnSpanFull(),
@@ -147,7 +147,7 @@ class CandidateTopicResource extends Resource
                         self::summaryEntry('upstream_provider'),
                         self::summaryEntry('upstream_id'),
                         self::summaryEntry('article_published_at')
-                            ->dateTime(),
+                            ->dateTime(EpisodeResource::DATETIME_FORMAT),
                         self::summaryEntry('article_url')
                             ->label('Article URL')
                             ->url(static fn (?string $state): ?string => $state)

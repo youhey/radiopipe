@@ -23,10 +23,12 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\HtmlString;
 use JsonException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Throwable;
 use UnitEnum;
 
 /**
@@ -34,6 +36,8 @@ use UnitEnum;
  */
 class EpisodeResource extends Resource
 {
+    public const DATETIME_FORMAT = 'Y-m-d H:i:s T';
+
     protected static ?string $model = Episode::class;
 
     protected static BackedEnum|string|null $navigationIcon = Heroicon::OutlinedRadio;
@@ -63,7 +67,7 @@ class EpisodeResource extends Resource
                     ->date()
                     ->sortable(),
                 TextColumn::make('published_at')
-                    ->dateTime()
+                    ->dateTime(self::DATETIME_FORMAT)
                     ->sortable(),
                 TextColumn::make('status')
                     ->badge()
@@ -92,7 +96,7 @@ class EpisodeResource extends Resource
                     ->label('Episode Topics')
                     ->sortable(),
                 TextColumn::make('created_at')
-                    ->dateTime()
+                    ->dateTime(self::DATETIME_FORMAT)
                     ->sortable(),
             ])
             ->filters([
@@ -136,9 +140,9 @@ class EpisodeResource extends Resource
                         self::summaryEntry('date')
                             ->date(),
                         self::summaryEntry('published_at')
-                            ->dateTime(),
+                            ->dateTime(self::DATETIME_FORMAT),
                         self::summaryEntry('processed_at')
-                            ->dateTime(),
+                            ->dateTime(self::DATETIME_FORMAT),
                         self::summaryEntry('character_key'),
                         self::summaryEntry('characterProfile.name')
                             ->label('Character'),
@@ -341,10 +345,18 @@ class EpisodeResource extends Resource
     public static function dateTimeString(mixed $value): ?string
     {
         if ($value instanceof DateTimeInterface) {
-            return $value->format(DATE_ATOM);
+            return $value->format(self::DATETIME_FORMAT);
         }
 
-        return is_scalar($value) && (string) $value !== '' ? (string) $value : null;
+        if (! is_scalar($value) || (string) $value === '') {
+            return null;
+        }
+
+        try {
+            return Carbon::parse((string) $value)->format(self::DATETIME_FORMAT);
+        } catch (Throwable) {
+            return (string) $value;
+        }
     }
 
     /**

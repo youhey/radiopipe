@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\ApiTokens;
 
 use App\Filament\Resources\ApiTokens\Pages\ListApiTokens;
+use App\Filament\Resources\EpisodeResource;
 use App\Models\User;
 use BackedEnum;
 use Filament\Actions\Action;
@@ -71,14 +72,14 @@ class ApiTokenResource extends Resource
                     ->badge()
                     ->separator(', '),
                 TextColumn::make('last_used_at')
-                    ->dateTime('Y-m-d H:i:s T')
+                    ->dateTime(EpisodeResource::DATETIME_FORMAT)
                     ->placeholder('Never')
                     ->sortable(),
                 TextColumn::make('created_at')
-                    ->dateTime('Y-m-d H:i:s T')
+                    ->dateTime(EpisodeResource::DATETIME_FORMAT)
                     ->sortable(),
                 TextColumn::make('expires_at')
-                    ->dateTime('Y-m-d H:i:s T')
+                    ->dateTime(EpisodeResource::DATETIME_FORMAT)
                     ->placeholder('Never')
                     ->sortable(),
             ])

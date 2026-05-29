@@ -128,7 +128,7 @@ class TopicScreeningKeywordRuleResource extends Resource
                     ->numeric()
                     ->sortable(),
                 TextColumn::make('updated_at')
-                    ->dateTime()
+                    ->dateTime(EpisodeResource::DATETIME_FORMAT)
                     ->sortable(),
             ])
             ->filters([

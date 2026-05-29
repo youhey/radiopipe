@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Resources\EpisodeResource;
 use BackedEnum;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
@@ -98,7 +99,7 @@ class EpisodesAnalysis extends Page
                 'episode_key' => is_scalar($row->episode_key ?? null) ? (string) $row->episode_key : '',
                 'status' => is_scalar($row->status ?? null) ? (string) $row->status : '',
                 'title' => is_scalar($row->title ?? null) ? (string) $row->title : '',
-                'published_at' => is_scalar($row->published_at ?? null) ? (string) $row->published_at : '',
+                'published_at' => EpisodeResource::dateTimeString($row->published_at ?? null) ?? '',
             ];
         }
 

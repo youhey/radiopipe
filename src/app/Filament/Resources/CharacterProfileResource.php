@@ -6,7 +6,6 @@ use App\Filament\Resources\CharacterProfileResource\Pages;
 use App\Models\CharacterProfile;
 use BackedEnum;
 use Closure;
-use DateTimeInterface;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -192,7 +191,7 @@ class CharacterProfileResource extends Resource
                     ->numeric()
                     ->sortable(),
                 TextColumn::make('updated_at')
-                    ->dateTime()
+                    ->dateTime(EpisodeResource::DATETIME_FORMAT)
                     ->sortable(),
             ])
             ->filters([
@@ -460,11 +459,7 @@ class CharacterProfileResource extends Resource
      */
     private static function dateTimeString(mixed $value): ?string
     {
-        if ($value instanceof DateTimeInterface) {
-            return $value->format(DATE_ATOM);
-        }
-
-        return is_scalar($value) && (string) $value !== '' ? (string) $value : null;
+        return EpisodeResource::dateTimeString($value);
     }
 
     /**

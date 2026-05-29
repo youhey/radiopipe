@@ -96,7 +96,7 @@ class EpisodeTopicResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(),
                 TextColumn::make('created_at')
-                    ->dateTime()
+                    ->dateTime(EpisodeResource::DATETIME_FORMAT)
                     ->sortable(),
             ])
             ->filters([
@@ -153,7 +153,7 @@ class EpisodeTopicResource extends Resource
                         self::summaryEntry('sort_order')
                             ->numeric(),
                         self::summaryEntry('created_at')
-                            ->dateTime(),
+                            ->dateTime(EpisodeResource::DATETIME_FORMAT),
                     ])
                     ->columns(3),
                 Section::make('Upstream/source metadata')

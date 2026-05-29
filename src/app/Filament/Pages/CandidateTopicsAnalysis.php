@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Resources\EpisodeResource;
 use BackedEnum;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
@@ -110,7 +111,7 @@ class CandidateTopicsAnalysis extends Page
                 'title' => $this->topicTitle($row->topic_draft_json ?? null),
                 'screening_status' => is_scalar($row->screening_status ?? null) ? (string) $row->screening_status : '',
                 'editorial_status' => is_scalar($row->editorial_status ?? null) ? (string) $row->editorial_status : '',
-                'processed_at' => is_scalar($row->processed_at ?? null) ? (string) $row->processed_at : '',
+                'processed_at' => EpisodeResource::dateTimeString($row->processed_at ?? null) ?? '',
             ];
         }
 
