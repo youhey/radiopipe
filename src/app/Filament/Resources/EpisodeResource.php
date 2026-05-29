@@ -7,6 +7,7 @@ use App\Filament\Resources\EpisodeResource\Pages;
 use App\Models\Episode;
 use App\Models\EpisodeTopic;
 use BackedEnum;
+use DateTimeInterface;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Infolists\Components\TextEntry;
@@ -23,6 +24,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\HtmlString;
+use JsonException;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use UnitEnum;
 
 /**
@@ -226,6 +229,73 @@ class EpisodeResource extends Resource
     }
 
     /**
+     * Episode export 用の JSON 互換配列を返す。
+     *
+     * @return array<string, mixed>
+     */
+    public static function exportPayload(Episode $episode): array
+    {
+        $episode->loadMissing(['characterProfile', 'topics']);
+
+        return [
+            'schema_version' => '1.0',
+            'type' => 'episode',
+            'episode' => [
+                'id' => $episode->id,
+                'episode_key' => $episode->episode_key,
+                'date' => self::dateString($episode->date),
+                'published_at' => self::dateTimeString($episode->published_at),
+                'processed_at' => self::dateTimeString($episode->processed_at),
+                'character_profile_id' => $episode->character_profile_id,
+                'character_key' => $episode->character_key,
+                'status' => $episode->status,
+                'title' => $episode->title,
+                'language' => $episode->language,
+                'target_duration_seconds' => $episode->target_duration_seconds,
+                'estimated_duration_seconds' => $episode->estimated_duration_seconds,
+                'scenario_json' => $episode->scenario_json,
+                'metadata' => $episode->metadata,
+                'errors' => $episode->errors,
+                'created_at' => self::dateTimeString($episode->created_at),
+                'updated_at' => self::dateTimeString($episode->updated_at),
+            ],
+            'character_profile' => $episode->characterProfile === null ? null : [
+                'id' => $episode->characterProfile->id,
+                'character_key' => $episode->characterProfile->character_key,
+                'name' => $episode->characterProfile->name,
+            ],
+            'episode_topics' => $episode->topics
+                ->sortBy([
+                    ['sort_order', 'asc'],
+                    ['id', 'asc'],
+                ])
+                ->values()
+                ->map(static fn (EpisodeTopic $topic): array => self::episodeTopicPayload($topic))
+                ->all(),
+        ];
+    }
+
+    /**
+     * JSON payload を download response として返す。
+     *
+     * @param array<string, mixed> $payload
+     *
+     * @throws JsonException
+     */
+    public static function jsonDownloadResponse(array $payload, string $fileName): StreamedResponse
+    {
+        $json = json_encode($payload, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+        return response()->streamDownload(
+            static function () use ($json): void {
+                echo $json;
+            },
+            $fileName,
+            ['Content-Type' => 'application/json; charset=UTF-8'],
+        );
+    }
+
+    /**
      * 要約項目を視覚的に区切る wrapper 属性を返す。
      *
      * @return array<string, string>
@@ -235,6 +305,30 @@ class EpisodeResource extends Resource
         return [
             'class' => 'rounded-xl border border-gray-200 bg-gray-50 p-4 shadow-sm dark:border-white/10 dark:bg-white/5',
         ];
+    }
+
+    /**
+     * 日付値を export 用文字列へ変換する。
+     */
+    public static function dateString(mixed $value): ?string
+    {
+        if ($value instanceof DateTimeInterface) {
+            return $value->format('Y-m-d');
+        }
+
+        return is_scalar($value) && (string) $value !== '' ? (string) $value : null;
+    }
+
+    /**
+     * 日時値を export 用文字列へ変換する。
+     */
+    public static function dateTimeString(mixed $value): ?string
+    {
+        if ($value instanceof DateTimeInterface) {
+            return $value->format(DATE_ATOM);
+        }
+
+        return is_scalar($value) && (string) $value !== '' ? (string) $value : null;
     }
 
     /**
@@ -255,6 +349,37 @@ class EpisodeResource extends Resource
         $escaped = htmlspecialchars($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 
         return new HtmlString(nl2br($escaped, false));
+    }
+
+    /**
+     * EpisodeTopic export 用の JSON 互換配列を返す。
+     *
+     * @return array<string, mixed>
+     */
+    private static function episodeTopicPayload(EpisodeTopic $topic): array
+    {
+        return [
+            'id' => $topic->id,
+            'episode_id' => $topic->episode_id,
+            'topic_id' => $topic->topic_id,
+            'upstream_provider' => $topic->upstream_provider,
+            'upstream_id' => $topic->upstream_id,
+            'source_name' => $topic->source_name,
+            'source_type' => $topic->source_type,
+            'title' => $topic->title,
+            'url' => $topic->url,
+            'screening_status' => $topic->screening_status,
+            'editorial_status' => $topic->editorial_status,
+            'scenario_selection_status' => $topic->scenario_selection_status,
+            'sort_order' => $topic->sort_order,
+            'topic_draft_json' => $topic->topic_draft_json,
+            'screening_json' => $topic->screening_json,
+            'editorial_json' => $topic->editorial_json,
+            'scenario_selection_json' => $topic->scenario_selection_json,
+            'metadata' => $topic->metadata,
+            'created_at' => self::dateTimeString($topic->created_at),
+            'updated_at' => self::dateTimeString($topic->updated_at),
+        ];
     }
 
     /**

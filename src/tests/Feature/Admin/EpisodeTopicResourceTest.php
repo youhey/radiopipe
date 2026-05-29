@@ -55,6 +55,31 @@ class EpisodeTopicResourceTest extends TestCase
         $component->assertSee('dummy');
     }
 
+    public function testAuthorizedAdminCanExportEpisodeTopicJsonFromView(): void
+    {
+        $this->actingAsAdmin();
+        $topic = $this->episodeTopic([
+            'topic_id' => 'upstream:export-topic',
+            'title' => 'エクスポート対象トピック',
+            'topic_draft_json' => ['title' => '下書きタイトル'],
+            'metadata' => ['source' => 'dummy'],
+        ]);
+
+        $component = Livewire::test(ViewEpisodeTopic::class, ['record' => $topic->getKey()]);
+        // @phpstan-ignore-next-line Filament の Livewire test macro を使用する。
+        $component->assertActionExists('export');
+        // @phpstan-ignore-next-line Filament の Livewire test macro を使用する。
+        $component->callAction('export');
+        $component->assertFileDownloaded('episode-topic-upstream-export-topic.json');
+
+        $payload = EpisodeTopicResource::exportPayload($topic);
+
+        self::assertSame('episode_topic', $payload['type']);
+        self::assertSame('upstream:export-topic', data_get($payload, 'episode_topic.topic_id'));
+        self::assertSame('下書きタイトル', data_get($payload, 'episode_topic.topic_draft_json.title'));
+        self::assertSame('dummy', data_get($payload, 'episode_topic.metadata.source'));
+    }
+
     public function testNonAdminUserCannotAccessEpisodeTopicList(): void
     {
         config(['radiopipe.admin.allowed_emails' => ['admin@example.test']]);

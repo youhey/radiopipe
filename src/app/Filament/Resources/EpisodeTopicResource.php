@@ -20,6 +20,8 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use JsonException;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use UnitEnum;
 
 /**
@@ -222,6 +224,62 @@ class EpisodeTopicResource extends Resource
     public static function canDeleteAny(): bool
     {
         return false;
+    }
+
+    /**
+     * EpisodeTopic export 用の JSON 互換配列を返す。
+     *
+     * @return array<string, mixed>
+     */
+    public static function exportPayload(EpisodeTopic $topic): array
+    {
+        $topic->loadMissing('episode');
+
+        return [
+            'schema_version' => '1.0',
+            'type' => 'episode_topic',
+            'episode' => [
+                'id' => $topic->episode?->id,
+                'episode_key' => $topic->episode?->episode_key,
+                'status' => $topic->episode?->status,
+                'title' => $topic->episode?->title,
+                'published_at' => EpisodeResource::dateTimeString($topic->episode?->published_at),
+            ],
+            'episode_topic' => [
+                'id' => $topic->id,
+                'episode_id' => $topic->episode_id,
+                'topic_id' => $topic->topic_id,
+                'upstream_provider' => $topic->upstream_provider,
+                'upstream_id' => $topic->upstream_id,
+                'source_name' => $topic->source_name,
+                'source_type' => $topic->source_type,
+                'title' => $topic->title,
+                'url' => $topic->url,
+                'screening_status' => $topic->screening_status,
+                'editorial_status' => $topic->editorial_status,
+                'scenario_selection_status' => $topic->scenario_selection_status,
+                'sort_order' => $topic->sort_order,
+                'topic_draft_json' => $topic->topic_draft_json,
+                'screening_json' => $topic->screening_json,
+                'editorial_json' => $topic->editorial_json,
+                'scenario_selection_json' => $topic->scenario_selection_json,
+                'metadata' => $topic->metadata,
+                'created_at' => EpisodeResource::dateTimeString($topic->created_at),
+                'updated_at' => EpisodeResource::dateTimeString($topic->updated_at),
+            ],
+        ];
+    }
+
+    /**
+     * JSON payload を download response として返す。
+     *
+     * @param array<string, mixed> $payload
+     *
+     * @throws JsonException
+     */
+    public static function jsonDownloadResponse(array $payload, string $fileName): StreamedResponse
+    {
+        return EpisodeResource::jsonDownloadResponse($payload, $fileName);
     }
 
     /**
