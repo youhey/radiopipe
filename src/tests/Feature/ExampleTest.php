@@ -10,13 +10,10 @@ use Tests\TestCase;
  */
 class ExampleTest extends TestCase
 {
-    /**
-     * A basic test example.
-     */
-    public function testTheApplicationReturnsASuccessfulResponse(): void
+    public function testRootRouteReturnsNotFound(): void
     {
         $response = $this->get('/');
 
-        $response->assertStatus(200);
+        $response->assertNotFound();
     }
 }
