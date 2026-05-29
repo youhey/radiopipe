@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Infolists\JsonPrettyEntry;
 use App\Filament\Resources\EpisodeResource\Pages;
 use App\Models\Episode;
 use App\Models\EpisodeTopic;
@@ -161,9 +162,9 @@ class EpisodeResource extends Resource
                     ->columnSpanFull(),
                 Section::make('Raw JSON')
                     ->schema([
-                        self::jsonEntry('scenario_json', 'Raw scenario_json'),
-                        self::jsonEntry('errors', 'Errors'),
-                        self::jsonEntry('metadata', 'Raw metadata'),
+                        JsonPrettyEntry::make('scenario_json', 'Raw scenario_json'),
+                        JsonPrettyEntry::make('errors', 'Errors'),
+                        JsonPrettyEntry::make('metadata', 'Raw metadata'),
                     ])
                     ->columnSpanFull(),
             ]);
@@ -222,34 +223,6 @@ class EpisodeResource extends Resource
     public static function canDeleteAny(): bool
     {
         return false;
-    }
-
-    /**
-     * JSON 表示用 entry を返す。
-     */
-    public static function jsonEntry(string $name, string $label): TextEntry
-    {
-        return TextEntry::make($name)
-            ->label($label)
-            ->formatStateUsing(static fn (mixed $state): string => self::prettyJson($state))
-            ->fontFamily(FontFamily::Mono)
-            ->extraEntryWrapperAttributes(self::summaryEntryWrapperAttributes())
-            ->copyable()
-            ->columnSpanFull();
-    }
-
-    /**
-     * JSON 互換値を読みやすい文字列へ変換する。
-     */
-    public static function prettyJson(mixed $value): string
-    {
-        if ($value === null) {
-            return 'null';
-        }
-
-        $json = json_encode($value, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-
-        return is_string($json) ? $json : '';
     }
 
     /**

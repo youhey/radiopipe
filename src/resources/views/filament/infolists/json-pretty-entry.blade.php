@@ -1,0 +1,1 @@
+<pre class="overflow-auto rounded-lg bg-gray-950 p-4 text-xs leading-relaxed text-gray-100 ring-1 ring-gray-900/10 dark:bg-gray-950 dark:text-gray-100"><code>{{ \App\Filament\Infolists\JsonPrettyEntry::prettyJson($entry->getState()) }}</code></pre>

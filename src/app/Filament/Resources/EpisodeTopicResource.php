@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Infolists\JsonPrettyEntry;
 use App\Filament\Resources\EpisodeTopicResource\Pages;
 use App\Models\EpisodeTopic;
 use BackedEnum;
@@ -158,11 +159,11 @@ class EpisodeTopicResource extends Resource
                     ->columns(2),
                 Section::make('Raw JSON')
                     ->schema([
-                        EpisodeResource::jsonEntry('topic_draft_json', 'Topic draft JSON'),
-                        EpisodeResource::jsonEntry('screening_json', 'Screening JSON'),
-                        EpisodeResource::jsonEntry('editorial_json', 'Editorial JSON'),
-                        EpisodeResource::jsonEntry('scenario_selection_json', 'Scenario selection JSON'),
-                        EpisodeResource::jsonEntry('metadata', 'Metadata JSON'),
+                        JsonPrettyEntry::make('topic_draft_json', 'Topic draft JSON'),
+                        JsonPrettyEntry::make('screening_json', 'Screening JSON'),
+                        JsonPrettyEntry::make('editorial_json', 'Editorial JSON'),
+                        JsonPrettyEntry::make('scenario_selection_json', 'Scenario selection JSON'),
+                        JsonPrettyEntry::make('metadata', 'Metadata JSON'),
                     ])
                     ->columnSpanFull(),
             ]);
