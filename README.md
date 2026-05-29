@@ -4,6 +4,10 @@ Personal Radio Script Pipeline for Curated News Digests.
 
 A tiny pipeline that turns structured digest JSON into personalized radio-style news scripts.
 
+## API
+
+The private Episode JSON API is documented in [`docs/api.md`](docs/api.md). The OpenAPI contract for downstream clients is [`docs/openapi.yaml`](docs/openapi.yaml).
+
 ## Development Debug Commands
 
 Inspect the configured topic pipeline without persisting results:

@@ -660,6 +660,14 @@ When API behavior changes, update docs/api.md in the same task.
 
 Do not document planned API features as current behavior.
 
+Episode API Contract
+
+The Episode JSON API response contract is defined in docs/openapi.yaml.
+
+Do not change Episode API response schema definitions unless explicitly requested.
+
+When Episode API behavior or response shape is intentionally changed, update docs/openapi.yaml, docs/api.md if applicable, and schema validation tests in the same task.
+
 HTTP Client Smoke Tests
 
 Root tests/http/ may contain PhpStorm HTTP Client smoke tests for manual integration checks.

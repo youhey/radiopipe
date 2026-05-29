@@ -2,6 +2,8 @@
 
 radiopipe の private Web API は Laravel Sanctum personal access token で保護します。
 
+Episode JSON API の機械可読な契約は [`docs/openapi.yaml`](openapi.yaml) に定義します。下流 client が依存するため、レスポンス形を変更する場合は OpenAPI schema と schema validation test も同じ変更で更新してください。
+
 ## API Token
 
 API token は Filament admin の `Settings > API Tokens` から管理できます。
