@@ -25,11 +25,102 @@ php artisan radiopipe:users:rotate-api-token user@example.test
 
 ## Episodes API
 
-`GET /api/episodes` は `auth:sanctum` と `abilities:episodes:read` で保護されています。
+Episode JSON API は `auth:sanctum` と `abilities:episodes:read` で保護されています。
 
 ```bash
 curl -H "Authorization: Bearer ${RADIOPIPE_API_TOKEN}" \
   https://example.test/api/episodes
 ```
 
-この API は生成済み Episode の read-only JSON を返します。token なし、または `episodes:read` ability のない token ではアクセスできません。
+token なし、または `episodes:read` ability のない token ではアクセスできません。API は read-only です。Episode の作成、更新、削除は提供しません。
+
+### GET /api/episodes
+
+生成済み Episode の軽量一覧を返します。既定では `completed` のみを `published_at desc, id desc` で返します。
+
+Query parameters:
+
+- `limit`: 既定 `100`、最大 `500`
+- `status`: 既定 `completed`
+- `character`: `character_key` で絞り込み
+- `from`: `published_at >= from`
+- `to`: `published_at <= to`
+
+Response example:
+
+```json
+{
+  "data": [
+    {
+      "episode_key": "episode_2026-05-29_0700_neko_nyan_001",
+      "status": "completed",
+      "published_at": "2026-05-29T07:00:00+09:00",
+      "processed_at": "2026-05-29T06:55:12+09:00",
+      "title": "今日のギークニュース",
+      "character": {
+        "key": "neko_nyan_balanced_radio",
+        "name": "ねこにゃん"
+      },
+      "language": "ja"
+    }
+  ],
+  "meta": {
+    "count": 1,
+    "limit": 100
+  }
+}
+```
+
+一覧 API は `scenario`、`topics`、内部 snapshot JSON を返しません。
+
+### GET /api/episodes/latest
+
+最新の `completed` Episode を詳細形式で返します。`completed` Episode が存在しない場合は 404 を返します。`failed` Episode は返しません。
+
+### GET /api/episodes/{episode_key}
+
+指定した `episode_key` の `completed` Episode を詳細形式で返します。存在しない場合、または `failed` Episode の場合は 404 を返します。
+
+Detail response example:
+
+```json
+{
+  "data": {
+    "episode_key": "episode_2026-05-29_0700_neko_nyan_001",
+    "status": "completed",
+    "published_at": "2026-05-29T07:00:00+09:00",
+    "processed_at": "2026-05-29T06:55:12+09:00",
+    "title": "今日のギークニュース",
+    "character": {
+      "key": "neko_nyan_balanced_radio",
+      "name": "ねこにゃん"
+    },
+    "language": "ja",
+    "scenario": {},
+    "topics": [
+      {
+        "topic_id": "upstream:236",
+        "status": "used_in_scenario",
+        "title": "GitHubアカウントのセキュリティ設定を点検するCLI「Moat」",
+        "summary": "GitHubの設定を読み取り専用で点検するCLIツールです。",
+        "why_it_matters": "リポジトリ運用やサプライチェーン安全性に関わります。",
+        "source_name": "Laravel News",
+        "url": "https://laravel-news.com/example",
+        "discussion_url": null,
+        "sort_order": 1
+      }
+    ]
+  }
+}
+```
+
+Detail API は client 表示用に整えた topic 情報だけを返します。以下は返しません。
+
+- `topic_draft_json`
+- `screening_json`
+- `editorial_json`
+- `scenario_selection_json`
+- raw prompts
+- raw model responses
+- raw upstream article bodies
+- API keys / OAuth tokens / authorization headers / secrets
