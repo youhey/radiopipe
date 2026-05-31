@@ -67,7 +67,7 @@ class DigestpipeUpstreamProvider implements UpstreamProvider
             throw UpstreamProviderException::invalidResponse('digestpipe');
         }
 
-        $records = $payload['data'] ?? null;
+        $records = $payload['articles'] ?? null;
 
         if (! is_array($records)) {
             throw UpstreamProviderException::invalidResponse('digestpipe');

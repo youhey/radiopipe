@@ -83,7 +83,7 @@ class UpstreamProviderTest extends TestCase
 
         Http::fake([
             'https://digestpipe.test/api/articles*' => Http::response([
-                'data' => [
+                'articles' => [
                     [
                         'id' => 123,
                         'source' => [
@@ -172,7 +172,7 @@ class UpstreamProviderTest extends TestCase
 
         Http::fake([
             'https://digestpipe.test/api/articles*' => Http::response([
-                'data' => [
+                'articles' => [
                     [
                         'id' => 'external-abc',
                         'article' => [
