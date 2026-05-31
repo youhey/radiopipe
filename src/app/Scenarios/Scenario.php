@@ -9,7 +9,7 @@ use InvalidArgumentException;
  */
 class Scenario
 {
-    /** @var string scenario title */
+    /** @var string episode 固有の生成タイトル */
     public string $title;
 
     /** @var string scenario language */

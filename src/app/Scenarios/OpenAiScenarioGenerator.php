@@ -162,6 +162,15 @@ class OpenAiScenarioGenerator implements ScenarioGenerator
             'Do not provide investment, medical, legal, safety, or security remediation advice.',
             'Respect banned phrases and disallowed expressions.',
             'Keep serious topics restrained and neutral.',
+            'Generate a unique episode title based on the selected topics and scenario content.',
+            'The title should be natural Japanese, short, and suitable for a radio episode list.',
+            'Do not always use a fixed generic title such as "今日のギークニュース".',
+            'Prefer a title that hints at one or two main topics.',
+            'Avoid clickbait, exaggerated claims, or unsupported facts in the title.',
+            'Keep the title within 12 to 32 Japanese characters when practical.',
+            'Character style may lightly influence title wording, but factual accuracy and source limitations override character flavor.',
+            'Serious topics must not receive playful or insensitive titles.',
+            'Uncertain information must not be stated as confirmed in the title.',
             'Use only topics listed in selected_topics.',
             'Do not include skipped topics in the spoken scenario unless explicitly requested.',
             'Generate structured JSON only.',
@@ -178,7 +187,7 @@ class OpenAiScenarioGenerator implements ScenarioGenerator
     private function scenarioInput(ScenarioGenerationInput $input, array $usedSelections): array
     {
         return [
-            'title' => $input->title ?? '今日のギークニュース',
+            'fallback_title' => $input->title ?? '今日のトピック',
             'language' => $input->language,
             'target_duration_seconds' => $input->targetDurationSeconds,
             'character_key' => $input->characterKey,
@@ -237,7 +246,10 @@ class OpenAiScenarioGenerator implements ScenarioGenerator
             'additionalProperties' => false,
             'required' => ['title', 'language', 'target_duration_seconds', 'estimated_duration_seconds', 'character_key', 'script_text', 'sections', 'metadata'],
             'properties' => [
-                'title' => ['type' => 'string'],
+                'title' => [
+                    'type' => 'string',
+                    'description' => 'Episode-specific Japanese title based on selected topics. Avoid fixed generic titles. Keep it concise and non-clickbait.',
+                ],
                 'language' => ['type' => 'string'],
                 'target_duration_seconds' => ['type' => 'integer', 'minimum' => 0],
                 'estimated_duration_seconds' => $duration,

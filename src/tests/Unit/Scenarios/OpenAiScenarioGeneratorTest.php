@@ -42,7 +42,7 @@ class OpenAiScenarioGeneratorTest extends TestCase
         self::assertSame('openai', $result->metadata['generator']);
         self::assertSame('gpt-test', $result->metadata['model']);
         self::assertSame(1, $result->metadata['selected_topic_count']);
-        self::assertSame('今日のギークニュース', $result->scenario->title);
+        self::assertSame('高い話題を読む技術ニュース', $result->scenario->title);
         self::assertSame('openai', $result->scenario->metadata['driver']);
         self::assertSame('topic-a', $result->scenario->sections[1]->topicIds[0]);
         self::assertStringContainsString('高い話題', $result->scenario->scriptText);
@@ -84,9 +84,13 @@ class OpenAiScenarioGeneratorTest extends TestCase
                 && $request->hasHeader('Authorization', 'Bearer test-openai-key')
                 && ($payload['model'] ?? null) === 'gpt-test'
                 && str_contains($instructions, 'Use only the provided topic facts')
+                && str_contains($instructions, 'Generate a unique episode title')
+                && str_contains($instructions, 'Do not always use a fixed generic title')
                 && str_contains($instructions, 'ダミーキャラクター')
                 && str_contains($instructions, 'banned_phrases')
                 && ! str_contains($instructions, 'test-openai-key')
+                && ($scenarioInput['fallback_title'] ?? null) === '今日のギークニュース'
+                && ! array_key_exists('title', $scenarioInput)
                 && is_array($firstTopic)
                 && ($firstTopic['topic_id'] ?? null) === 'topic-a'
                 && ($firstTopic['source_name'] ?? null) === 'Digestpipe'
@@ -116,7 +120,8 @@ class OpenAiScenarioGeneratorTest extends TestCase
 
             $encoded = json_encode($schema, JSON_THROW_ON_ERROR);
 
-            return str_contains($encoded, '"metadata":{"type":"object","additionalProperties":false,"required":[],"properties":{}}');
+            return str_contains($encoded, '"metadata":{"type":"object","additionalProperties":false,"required":[],"properties":{}}')
+                && str_contains($encoded, 'Episode-specific Japanese title based on selected topics');
         });
     }
 
@@ -340,7 +345,7 @@ class OpenAiScenarioGeneratorTest extends TestCase
     private function validScenarioPayload(): array
     {
         return [
-            'title' => '今日のギークニュース',
+            'title' => '高い話題を読む技術ニュース',
             'language' => 'ja',
             'target_duration_seconds' => 900,
             'estimated_duration_seconds' => 180,

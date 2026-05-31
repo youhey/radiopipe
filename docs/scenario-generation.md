@@ -42,12 +42,18 @@ OpenAI、外部 API、network access は使いません。
 
 Fake text は最終的な character style ではありません。
 
+`Scenario.title` は固定の番組名ではなく、その回の選択 topic から生成される episode 固有のタイトルです。
+一覧、API、admin 画面、downstream playback app で内容を識別しやすいよう、主要 topic を短く示す名前にします。
+有用な topic 情報がない場合だけ、汎用的な fallback title を使います。
+
 ## OpenAI Generator
 
 `OpenAiScenarioGenerator` は `CharacterProfile` を執筆指示に変換し、選択済み topic の compact data だけを OpenAI Responses API に渡します。
 raw upstream article body、provider raw response、API key、secret は送信・保存・ログ出力しません。
 
 OpenAI generator は `pending` editorial topic から selector が `used_in_scenario` にした topic だけを spoken scenario に使います。
+`Scenario.title` も選択済み topic と scenario 内容に基づく episode 固有の日本語タイトルとして生成します。
+固定の `今日のギークニュース` のような generic title は、topic 情報が不足している場合の fallback としてだけ使います。
 出力は `Scenario` / `ScenarioSection` の構造へ変換され、必須 field、duration、section type、参照 topic id を検証します。
 invalid output の場合は fake に fallback せず、scenario generator failure として扱います。
 

@@ -16,7 +16,7 @@ class ScenarioGenerationInput
     /** @var int 目標読み上げ秒数 */
     public int $targetDurationSeconds;
 
-    /** @var string|null scenario title */
+    /** @var string|null fallback 用の scenario title */
     public ?string $title;
 
     /** @var string scenario language */

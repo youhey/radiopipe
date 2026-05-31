@@ -27,7 +27,7 @@ class FakeScenarioGeneratorTest extends TestCase
         $result = $generator->generate(new ScenarioGenerationInput(
             characterKey: 'neko_nyan_balanced_radio',
             targetDurationSeconds: 900,
-            title: '今日のギークニュース',
+            title: '固定入力タイトル',
             language: 'ja',
             editorialEvaluations: [
                 $this->evaluation('topic-low', '低い話題', 60),
@@ -38,7 +38,8 @@ class FakeScenarioGeneratorTest extends TestCase
 
         self::assertSame('fake', $result->metadata['generator']);
         self::assertSame(2, $result->metadata['selected_topic_count']);
-        self::assertSame('今日のギークニュース', $result->scenario->title);
+        self::assertSame('高い話題 ほか', $result->scenario->title);
+        self::assertNotSame('今日のギークニュース', $result->scenario->title);
         self::assertSame('neko_nyan_balanced_radio', $result->scenario->characterKey);
         self::assertNotSame('', $result->scenario->scriptText);
         self::assertCount(4, $result->scenario->sections);
@@ -63,15 +64,30 @@ class FakeScenarioGeneratorTest extends TestCase
             title: null,
             language: 'ja',
             editorialEvaluations: [
-                $this->evaluation('topic-a', 'A', 80),
-                $this->evaluation('topic-b', 'B', 70),
+                $this->evaluation('topic-a', 'GitHubセキュリティ点検ツール', 80),
+                $this->evaluation('topic-b', 'ブラウザ内コンテナビルド', 70),
             ],
         ));
 
         self::assertCount(2, $result->topicSelections);
         self::assertSame(ScenarioTopicSelectionStatus::UsedInScenario, $result->topicSelections[0]->status);
         self::assertSame(ScenarioTopicSelectionStatus::SelectedNotUsed, $result->topicSelections[1]->status);
-        self::assertSame('今日のギークニュース', $result->scenario->title);
+        self::assertSame('GitHubセキュリティ点検ツール ほか', $result->scenario->title);
+    }
+
+    public function testFakeGeneratorFallsBackWhenNoTopicIsSelected(): void
+    {
+        $generator = new FakeScenarioGenerator(new ScenarioTopicSelector(), maxTopics: 1);
+
+        $result = $generator->generate(new ScenarioGenerationInput(
+            characterKey: null,
+            targetDurationSeconds: 300,
+            title: null,
+            language: 'ja',
+            editorialEvaluations: [],
+        ));
+
+        self::assertSame('今日のトピック', $result->scenario->title);
     }
 
     private function evaluation(

@@ -9,6 +9,10 @@ use App\Topics\Editorial\TopicEditorialEvaluation;
  */
 class FakeScenarioGenerator implements ScenarioGenerator
 {
+    private const TITLE_MAX_LENGTH = 32;
+
+    private const TITLE_SUFFIX = ' ほか';
+
     private ScenarioTopicSelector $topicSelector;
 
     private int $maxTopics;
@@ -93,7 +97,7 @@ class FakeScenarioGenerator implements ScenarioGenerator
         );
 
         $scenario = new Scenario(
-            title: $input->title ?? '今日のギークニュース',
+            title: $this->scenarioTitle($input->editorialEvaluations, $usedSelections),
             language: $input->language,
             targetDurationSeconds: $input->targetDurationSeconds,
             estimatedDurationSeconds: $estimatedDurationSeconds,
@@ -114,6 +118,44 @@ class FakeScenarioGenerator implements ScenarioGenerator
                 'selected_topic_count' => count($usedSelections),
             ],
         );
+    }
+
+    /**
+     * @param list<TopicEditorialEvaluation> $editorialEvaluations
+     * @param list<ScenarioTopicSelection> $usedSelections
+     */
+    private function scenarioTitle(array $editorialEvaluations, array $usedSelections): string
+    {
+        foreach ($usedSelections as $selection) {
+            $evaluation = $this->evaluationForSelection($editorialEvaluations, $selection);
+
+            if (! $evaluation instanceof TopicEditorialEvaluation) {
+                continue;
+            }
+
+            $title = trim($evaluation->localized->title);
+
+            if ($title !== '') {
+                return $this->topicAwareTitle($title);
+            }
+        }
+
+        return '今日のトピック';
+    }
+
+    private function topicAwareTitle(string $topicTitle): string
+    {
+        $normalized = preg_replace('/\s+/u', ' ', trim($topicTitle));
+        $base = is_string($normalized) && $normalized !== '' ? $normalized : $topicTitle;
+        $suffixLength = mb_strlen(self::TITLE_SUFFIX);
+        $ellipsisLength = 1;
+        $maxBaseLength = self::TITLE_MAX_LENGTH - $suffixLength;
+
+        if (mb_strlen($base) > $maxBaseLength) {
+            $base = rtrim(mb_substr($base, 0, $maxBaseLength - $ellipsisLength), " \t\n\r\0\x0B、。,.・") . '…';
+        }
+
+        return $base . self::TITLE_SUFFIX;
     }
 
     /**

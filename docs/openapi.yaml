@@ -426,7 +426,8 @@
         ],
         "properties": {
           "title": {
-            "type": "string"
+            "type": "string",
+            "description": "Episode-specific generated title based on selected topics. It is not a fixed program title."
           },
           "language": {
             "type": "string"

@@ -58,7 +58,7 @@ Response example:
       "status": "completed",
       "published_at": "2026-05-29T07:00:00+09:00",
       "processed_at": "2026-05-29T06:55:12+09:00",
-      "title": "今日のギークニュース",
+      "title": "GitHub防衛線とブラウザ内コンテナの話",
       "character": {
         "key": "neko_nyan_balanced_radio",
         "name": "ねこにゃん"
@@ -92,7 +92,7 @@ Detail response example:
     "status": "completed",
     "published_at": "2026-05-29T07:00:00+09:00",
     "processed_at": "2026-05-29T06:55:12+09:00",
-    "title": "今日のギークニュース",
+    "title": "GitHub防衛線とブラウザ内コンテナの話",
     "character": {
       "key": "neko_nyan_balanced_radio",
       "name": "ねこにゃん"
