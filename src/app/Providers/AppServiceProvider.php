@@ -10,6 +10,7 @@ use App\Scenarios\ScenarioGenerator;
 use App\Topics\Editorial\FakeTopicEditorialAnalyzer;
 use App\Topics\Editorial\OpenAiTopicEditorialAnalyzer;
 use App\Topics\Editorial\TopicEditorialAnalyzer;
+use App\Topics\Ratings\DigestpipeRatingClient;
 use App\Upstream\UpstreamProvider;
 use App\Upstream\UpstreamProviderManager;
 use App\Weather\WeatherProvider;
@@ -27,6 +28,15 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(NewsProviderManager::class);
         $this->app->singleton(UpstreamProviderManager::class);
         $this->app->singleton(WeatherProviderManager::class);
+
+        $this->app->bind(DigestpipeRatingClient::class, function (): DigestpipeRatingClient {
+            return new DigestpipeRatingClient(
+                $this->stringConfig('radiopipe.upstream.url', ''),
+                $this->nullableStringConfig('radiopipe.upstream.key'),
+                $this->intConfig('radiopipe.upstream.request_timeout', 30),
+                $this->intConfig('radiopipe.upstream.max_retries', 2),
+            );
+        });
 
         $this->app->bind(NewsProvider::class, function (): NewsProvider {
             return $this->app->make(NewsProviderManager::class)->driver();

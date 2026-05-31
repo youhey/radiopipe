@@ -24,6 +24,7 @@ php artisan radiopipe:users:rotate-api-token user@example.test
 ```
 
 既定 token name は `radiopipe-api` です。既定 ability は `episodes:read` です。
+topic rating API を使う token には `topics:rate` ability を追加してください。既存 token は自動更新されません。
 
 ## Episodes API
 
@@ -128,3 +129,69 @@ Detail API は client 表示用に整えた topic 情報だけを返します。
 - raw model responses
 - raw upstream article bodies
 - API keys / OAuth tokens / authorization headers / secrets
+
+## Topics Rating API
+
+Topic Rating API は `auth:sanctum` と `abilities:topics:rate` で保護されています。
+rating は upstream digestpipe の Article Rating API に転送され、radiopipe 側には rating 履歴を保存しません。
+`RADIOPIPE_UPSTREAM_KEY` には digestpipe 側の `digests:rate` ability が必要です。
+
+topic id は path segment として渡します。`:` など URL 上で扱いに注意が必要な文字を含む場合は URL encode してください。
+
+### PUT /api/topics/{id}/rating
+
+topic rating を設定または上書きします。
+
+Request:
+
+```json
+{
+  "rating": 1
+}
+```
+
+受け付ける rating 値:
+
+- `-1`: Bad
+- `1`: Good
+- `2` - `5`: Good の段階評価
+
+`0`、範囲外、未指定、非整数は 422 です。Good/Bad UI だけで使う client は `-1` と `1` を使えば十分です。
+
+Response:
+
+```json
+{
+  "topic_rating": {
+    "topic_id": "upstream:236",
+    "upstream": {
+      "provider": "digestpipe",
+      "id": 236
+    },
+    "rating": 1,
+    "rated_at": "2026-05-31T10:15:00+09:00"
+  }
+}
+```
+
+### DELETE /api/topics/{id}/rating
+
+topic rating を解除します。`204 No Content` ではなく、解除後の状態を返します。
+
+Response:
+
+```json
+{
+  "topic_rating": {
+    "topic_id": "upstream:236",
+    "upstream": {
+      "provider": "digestpipe",
+      "id": 236
+    },
+    "rating": null,
+    "rated_at": null
+  }
+}
+```
+
+rating API は digestpipe 内部名の `manual_rating`、`manual_rated_at`、raw upstream response、upstream token を返しません。

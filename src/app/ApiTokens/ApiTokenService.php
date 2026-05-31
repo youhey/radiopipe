@@ -13,6 +13,8 @@ class ApiTokenService
 {
     public const ABILITY_EPISODES_READ = 'episodes:read';
 
+    public const ABILITY_TOPICS_RATE = 'topics:rate';
+
     public const DEFAULT_TOKEN_NAME = 'radiopipe-api';
 
     /**

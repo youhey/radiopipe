@@ -668,6 +668,14 @@ Do not change Episode API response schema definitions unless explicitly requeste
 
 When Episode API behavior or response shape is intentionally changed, update docs/openapi.yaml, docs/api.md if applicable, and schema validation tests in the same task.
 
+## Topic Rating API
+
+Topic rating endpoints are write-through APIs that forward ratings to upstream digestpipe.
+
+Do not store local rating history or expose digestpipe internal `manual_*` fields unless explicitly requested.
+
+When changing Topic Rating API response shape, update `docs/openapi.yaml`, `docs/api.md`, and schema validation tests in the same task.
+
 HTTP Client Smoke Tests
 
 Root tests/http/ may contain PhpStorm HTTP Client smoke tests for manual integration checks.

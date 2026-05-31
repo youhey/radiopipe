@@ -21,6 +21,7 @@ return [
         'default_name' => 'radiopipe-api',
         'allowed_abilities' => [
             'episodes:read',
+            'topics:rate',
         ],
         'default_abilities' => [
             'episodes:read',

@@ -176,6 +176,117 @@
           }
         }
       }
+    },
+    "/api/topics/{id}/rating": {
+      "put": {
+        "summary": "Set topic rating",
+        "description": "Private write-through Topic Rating API. Requires a Sanctum bearer token with the topics:rate ability. The rating is forwarded to upstream digestpipe and no local rating history is stored.",
+        "operationId": "setTopicRating",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Public radiopipe topic_id. URL-encode the path segment when needed.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TopicRatingRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated topic rating state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TopicRatingResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Clear topic rating",
+        "description": "Private write-through Topic Rating API. Requires a Sanctum bearer token with the topics:rate ability. The clear request is forwarded to upstream digestpipe and no local rating history is stored.",
+        "operationId": "clearTopicRating",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Public radiopipe topic_id. URL-encode the path segment when needed.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cleared topic rating state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TopicRatingResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -222,6 +333,26 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/ValidationErrorResponse"
+            }
+          }
+        }
+      },
+      "BadGateway": {
+        "description": "Upstream service returned an unexpected failure.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "ServiceUnavailable": {
+        "description": "Upstream service is unavailable.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
             }
           }
         }
@@ -613,6 +744,97 @@
           "errors": {
             "type": "object",
             "additionalProperties": true
+          }
+        }
+      },
+      "TopicRatingRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "rating"
+        ],
+        "properties": {
+          "rating": {
+            "type": "integer",
+            "enum": [
+              -1,
+              1,
+              2,
+              3,
+              4,
+              5
+            ]
+          }
+        }
+      },
+      "TopicRatingResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "topic_rating"
+        ],
+        "properties": {
+          "topic_rating": {
+            "$ref": "#/components/schemas/TopicRating"
+          }
+        }
+      },
+      "TopicRating": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "topic_id",
+          "upstream",
+          "rating",
+          "rated_at"
+        ],
+        "properties": {
+          "topic_id": {
+            "type": "string"
+          },
+          "upstream": {
+            "$ref": "#/components/schemas/TopicRatingUpstreamRef"
+          },
+          "rating": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "enum": [
+              -1,
+              1,
+              2,
+              3,
+              4,
+              5,
+              null
+            ]
+          },
+          "rated_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "TopicRatingUpstreamRef": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "provider",
+          "id"
+        ],
+        "properties": {
+          "provider": {
+            "type": "string",
+            "enum": [
+              "digestpipe"
+            ]
+          },
+          "id": {
+            "type": "integer"
           }
         }
       }
