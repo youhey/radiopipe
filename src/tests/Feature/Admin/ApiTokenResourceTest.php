@@ -8,6 +8,7 @@ use App\Filament\Resources\ApiTokens\Pages\ListApiTokens;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 use Laravel\Sanctum\PersonalAccessToken;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -23,7 +24,10 @@ class ApiTokenResourceTest extends TestCase
     {
         $this->actingAsAdmin();
         $user = User::factory()->create(['email' => 'api-user@example.test']);
-        $token = $user->createToken('radiopipe-api', [ApiTokenService::ABILITY_EPISODES_READ])->accessToken;
+        $token = $user->createToken('radiopipe-api', [
+            ApiTokenService::ABILITY_EPISODES_READ,
+            ApiTokenService::ABILITY_TOPICS_RATE,
+        ])->accessToken;
 
         $this->get(ApiTokenResource::getUrl('index'))->assertOk();
 
@@ -32,6 +36,8 @@ class ApiTokenResourceTest extends TestCase
         $component->assertCanSeeTableRecords([$token]);
         $component->assertSee('api-user@example.test');
         $component->assertSee('radiopipe-api');
+        $component->assertSee(ApiTokenService::ABILITY_EPISODES_READ);
+        $component->assertSee(ApiTokenService::ABILITY_TOPICS_RATE);
     }
 
     public function testNonAdminUserCannotAccessApiTokensPage(): void
@@ -83,6 +89,62 @@ class ApiTokenResourceTest extends TestCase
         $component->assertSee('radiopipe-api');
         $component->assertDontSee($createdToken->plainTextToken);
         $component->assertDontSee($createdToken->accessToken->token);
+    }
+
+    public function testEditTokenActionUpdatesMetadataWithoutRotatingToken(): void
+    {
+        $this->actingAsAdmin();
+        $user = User::factory()->create(['email' => 'api-user@example.test']);
+        $createdToken = $user->createToken('radiopipe-api', [ApiTokenService::ABILITY_EPISODES_READ]);
+        $token = $createdToken->accessToken;
+        $tokenHash = $token->token;
+
+        $component = Livewire::test(ListApiTokens::class);
+        // @phpstan-ignore-next-line Filament の Livewire test macro を使用する。
+        $component->assertTableActionExists('editMetadata', record: $token);
+        // @phpstan-ignore-next-line Filament の Livewire test macro を使用する。
+        $component->callTableAction('editMetadata', $token, [
+            'name' => ' updated-radiopipe-api ',
+            'abilities' => [
+                ApiTokenService::ABILITY_EPISODES_READ,
+                ApiTokenService::ABILITY_TOPICS_RATE,
+            ],
+        ]);
+
+        $token->refresh();
+
+        self::assertSame('updated-radiopipe-api', $token->name);
+        self::assertSame([
+            ApiTokenService::ABILITY_EPISODES_READ,
+            ApiTokenService::ABILITY_TOPICS_RATE,
+        ], $token->abilities);
+        self::assertSame($tokenHash, $token->token);
+        self::assertSame($user->id, $token->tokenable_id);
+        self::assertNull($token->last_used_at);
+        $component->assertDontSee($createdToken->plainTextToken);
+        $component->assertDontSee($tokenHash);
+    }
+
+    public function testUpdateTokenMetadataRejectsUnsupportedAbility(): void
+    {
+        $this->actingAsAdmin();
+        $user = User::factory()->create(['email' => 'api-user@example.test']);
+        $token = $user->createToken('radiopipe-api', [ApiTokenService::ABILITY_EPISODES_READ])->accessToken;
+
+        $this->expectException(InvalidArgumentException::class);
+
+        app(ApiTokenService::class)->updateTokenMetadata($token, 'radiopipe-api', ['unsupported:ability']);
+    }
+
+    public function testUpdateTokenMetadataRejectsEmptyAbilities(): void
+    {
+        $this->actingAsAdmin();
+        $user = User::factory()->create(['email' => 'api-user@example.test']);
+        $token = $user->createToken('radiopipe-api', [ApiTokenService::ABILITY_EPISODES_READ])->accessToken;
+
+        $this->expectException(InvalidArgumentException::class);
+
+        app(ApiTokenService::class)->updateTokenMetadata($token, 'radiopipe-api', []);
     }
 
     public function testRevokeTokenActionDeletesSelectedToken(): void

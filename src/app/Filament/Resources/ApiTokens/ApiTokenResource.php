@@ -2,17 +2,22 @@
 
 namespace App\Filament\Resources\ApiTokens;
 
+use App\ApiTokens\ApiTokenService;
 use App\Filament\Resources\ApiTokens\Pages\ListApiTokens;
 use App\Filament\Resources\EpisodeResource;
 use App\Models\User;
 use BackedEnum;
 use Filament\Actions\Action;
+use Filament\Forms\Components\CheckboxList;
+use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use Laravel\Sanctum\PersonalAccessToken;
 use UnitEnum;
 
@@ -68,9 +73,9 @@ class ApiTokenResource extends Resource
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('abilities')
-                    ->formatStateUsing(static fn (mixed $state): string => self::formatAbilities($state))
-                    ->badge()
-                    ->separator(', '),
+                    ->formatStateUsing(static fn (mixed $state): string => self::formatAbilityBadges($state))
+                    ->html()
+                    ->wrap(),
                 TextColumn::make('last_used_at')
                     ->dateTime(EpisodeResource::DATETIME_FORMAT)
                     ->placeholder('Never')
@@ -84,6 +89,37 @@ class ApiTokenResource extends Resource
                     ->sortable(),
             ])
             ->recordActions([
+                Action::make('editMetadata')
+                    ->label('Edit Token')
+                    ->icon(Heroicon::OutlinedPencilSquare)
+                    ->form(fn (PersonalAccessToken $record, ApiTokenService $tokens): array => [
+                        TextInput::make('name')
+                            ->label('Token name')
+                            ->default($record->name)
+                            ->required()
+                            ->maxLength(255),
+                        CheckboxList::make('abilities')
+                            ->label('Abilities')
+                            ->options($tokens->allowedAbilities())
+                            ->default(self::abilityList($record->abilities))
+                            ->required(),
+                    ])
+                    ->action(static function (PersonalAccessToken $record, array $data, ApiTokenService $tokens): void {
+                        $allowedAbilities = array_keys($tokens->allowedAbilities());
+
+                        Validator::make($data, [
+                            'name' => ['required', 'string', 'max:255'],
+                            'abilities' => ['required', 'array', 'min:1'],
+                            'abilities.*' => ['required', 'string', Rule::in($allowedAbilities)],
+                        ])->validate();
+
+                        $tokens->updateTokenMetadata(
+                            token: $record,
+                            name: self::stringData($data, 'name'),
+                            abilities: self::arrayData($data, 'abilities'),
+                        );
+                    })
+                    ->successNotificationTitle('API token updated.'),
                 Action::make('revoke')
                     ->label('Revoke Token')
                     ->icon(Heroicon::OutlinedTrash)
@@ -152,22 +188,76 @@ class ApiTokenResource extends Resource
     }
 
     /**
-     * abilities を表示用文字列に変換する。
+     * abilities を表示用 badge HTML に変換する。
      */
-    private static function formatAbilities(mixed $state): string
+    private static function formatAbilityBadges(mixed $state): string
     {
+        $abilities = self::abilityList($state);
+
+        if ($abilities === []) {
+            return '<span class="text-sm text-gray-500 dark:text-gray-400">None</span>';
+        }
+
+        $badges = array_map(
+            static fn (string $ability): string => sprintf(
+                '<span class="inline-flex items-center rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700 ring-1 ring-gray-200 dark:bg-white/10 dark:text-gray-200 dark:ring-white/10">%s</span>',
+                e($ability),
+            ),
+            $abilities,
+        );
+
+        return '<div class="flex flex-wrap gap-1.5">' . implode('', $badges) . '</div>';
+    }
+
+    /**
+     * action data から string 値を取り出す。
+     *
+     * @param array<array-key, mixed> $data
+     */
+    private static function stringData(array $data, string $key): string
+    {
+        $value = $data[$key] ?? '';
+
+        return is_string($value) ? $value : '';
+    }
+
+    /**
+     * action data から list 値を取り出す。
+     *
+     * @param array<array-key, mixed> $data
+     *
+     * @return list<mixed>
+     */
+    private static function arrayData(array $data, string $key): array
+    {
+        $value = $data[$key] ?? [];
+
+        return is_array($value) ? array_values($value) : [];
+    }
+
+    /**
+     * abilities cast 値を表示・form 用 list に整える。
+     *
+     * @return list<string>
+     */
+    private static function abilityList(mixed $state): array
+    {
+        if (is_string($state)) {
+            return $state === '' ? [] : [$state];
+        }
+
         if (! is_array($state)) {
-            return '';
+            return [];
         }
 
         $abilities = [];
 
         foreach ($state as $ability) {
-            if (is_string($ability)) {
+            if (is_string($ability) && $ability !== '') {
                 $abilities[] = $ability;
             }
         }
 
-        return implode(', ', $abilities);
+        return $abilities;
     }
 }

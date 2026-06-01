@@ -88,6 +88,38 @@ class ApiTokenService
     }
 
     /**
+     * 既存 token の表示 metadata を更新する。
+     *
+     * @param array<int, mixed> $abilities
+     */
+    public function updateTokenMetadata(PersonalAccessToken $token, string $name, array $abilities): PersonalAccessToken
+    {
+        $normalizedName = trim($name);
+
+        if ($normalizedName === '') {
+            throw new InvalidArgumentException('API token name must not be empty.');
+        }
+
+        if (mb_strlen($normalizedName) > 255) {
+            throw new InvalidArgumentException('API token name must not be longer than 255 characters.');
+        }
+
+        $normalizedAbilities = $this->normalizeAbilities($abilities);
+
+        if ($normalizedAbilities === []) {
+            throw new InvalidArgumentException('API token abilities must not be empty.');
+        }
+
+        $this->ensureAllowedAbilities($normalizedAbilities);
+
+        $token->name = $normalizedName;
+        $token->abilities = $normalizedAbilities;
+        $token->save();
+
+        return $token->refresh();
+    }
+
+    /**
      * token を個別失効する。
      */
     public function revokeToken(PersonalAccessToken $token): void
