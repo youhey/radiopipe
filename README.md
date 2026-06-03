@@ -45,7 +45,7 @@ Automatic episode generation is disabled by default. Enable and configure the La
 RADIOPIPE_TOPIC_NOMINATION_THROTTLE_SECONDS=3600
 ```
 
-Laravel's scheduler registers a named callback `radiopipe:pipeline:compile` every ten minutes with `withoutOverlapping(30)`. The callback runs `radiopipe:topics:nominate` first, then `radiopipe:episodes:compile` only if nomination succeeds. Topic nomination uses a throttle lock controlled by `RADIOPIPE_TOPIC_NOMINATION_THROTTLE_SECONDS`. The hosting platform still needs to run Laravel's scheduler; Laravel Cloud scheduler setup is a deployment concern for a later task.
+Laravel's scheduler registers named callbacks for `radiopipe:pipeline:compile` at JST 09:00, 13:00, and 17:00 with `withoutOverlapping(30)`. Each callback runs `radiopipe:topics:nominate` first, then `radiopipe:episodes:compile` only if nomination succeeds. Topic nomination uses a throttle lock controlled by `RADIOPIPE_TOPIC_NOMINATION_THROTTLE_SECONDS`. The hosting platform still needs to run Laravel's scheduler; Laravel Cloud scheduler setup is a deployment concern for a later task.
 
 ## Development Checks
 

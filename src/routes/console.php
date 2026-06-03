@@ -1,14 +1,9 @@
 <?php
 
-use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
 
-Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote');
-
-Schedule::call(static function (): int {
+$compileRadiopipePipeline = static function (): int {
     $nominateExitCode = Artisan::call('radiopipe:topics:nominate');
 
     if ($nominateExitCode !== 0) {
@@ -16,7 +11,12 @@ Schedule::call(static function (): int {
     }
 
     return Artisan::call('radiopipe:episodes:compile');
-})
-    ->everyTenMinutes()
-    ->name('radiopipe:pipeline:compile')
-    ->withoutOverlapping(30);
+};
+
+foreach (['09:00', '13:00', '17:00'] as $time) {
+    Schedule::call($compileRadiopipePipeline)
+        ->dailyAt($time)
+        ->timezone('Asia/Tokyo')
+        ->name("radiopipe:pipeline:compile:{$time}")
+        ->withoutOverlapping(30);
+}

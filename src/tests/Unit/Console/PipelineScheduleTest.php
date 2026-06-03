@@ -38,14 +38,20 @@ class PipelineScheduleTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function testPipelineCompileCallbackIsScheduledEveryTenMinutes(): void
+    public function testPipelineCompileCallbacksAreScheduledThreeTimesDailyInTokyo(): void
     {
-        $event = $this->pipelineEvent();
+        $events = $this->pipelineEvents();
 
-        self::assertSame('*/10 * * * *', $event->expression);
-        self::assertTrue($event->withoutOverlapping);
-        self::assertSame(30, $event->expiresAt);
-        self::assertSame('radiopipe:pipeline:compile', $event->description);
+        self::assertSame(['radiopipe:pipeline:compile:09:00', 'radiopipe:pipeline:compile:13:00', 'radiopipe:pipeline:compile:17:00'], array_keys($events));
+        self::assertSame('0 9 * * *', $events['radiopipe:pipeline:compile:09:00']->expression);
+        self::assertSame('0 13 * * *', $events['radiopipe:pipeline:compile:13:00']->expression);
+        self::assertSame('0 17 * * *', $events['radiopipe:pipeline:compile:17:00']->expression);
+
+        foreach ($events as $event) {
+            self::assertTrue($event->withoutOverlapping);
+            self::assertSame(30, $event->expiresAt);
+            self::assertSame('Asia/Tokyo', $event->timezone);
+        }
     }
 
     public function testScheduledPipelineCallbackRunsNominationThenCompilation(): void
@@ -65,7 +71,7 @@ class PipelineScheduleTest extends TestCase
         $this->app->instance(ScenarioTopicSelector::class, new ScenarioTopicSelector());
         $this->app->instance(ScenarioGenerator::class, new PipelineScheduleRecordingScenarioGenerator());
 
-        $event = $this->pipelineEvent();
+        $event = $this->pipelineEvents()['radiopipe:pipeline:compile:09:00'];
 
         self::assertSame(0, $event->run(app()));
         $this->assertDatabaseCount('candidate_topics', 1);
@@ -73,19 +79,30 @@ class PipelineScheduleTest extends TestCase
     }
 
     /**
-     * schedule に登録された pipeline event を取り出します。
+     * schedule に登録された pipeline event 一覧を返します。
+     *
+     * @return array<string, CallbackEvent>
      */
-    private function pipelineEvent(): CallbackEvent
+    private function pipelineEvents(): array
     {
+        $pipelineEvents = [];
         $events = app(Schedule::class)->events();
 
         foreach ($events as $event) {
-            if ($event instanceof CallbackEvent && $event->description === 'radiopipe:pipeline:compile') {
-                return $event;
+            $description = $event->description ?? null;
+
+            if ($event instanceof CallbackEvent && is_string($description) && str_starts_with($description, 'radiopipe:pipeline:compile:')) {
+                $pipelineEvents[$description] = $event;
             }
         }
 
-        self::fail('radiopipe:pipeline:compile was not scheduled.');
+        ksort($pipelineEvents);
+
+        if ($pipelineEvents === []) {
+            self::fail('radiopipe:pipeline:compile was not scheduled.');
+        }
+
+        return $pipelineEvents;
     }
 
     private function upstreamItem(int $id): UpstreamArticleItem

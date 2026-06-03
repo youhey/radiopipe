@@ -61,5 +61,5 @@ RADIOPIPE_TOPIC_NOMINATION_THROTTLE_SECONDS=3600
 RADIOPIPE_TOPIC_NOMINATION_THROTTLE_SECONDS=3600
 ```
 
-Laravel scheduler が named callback `radiopipe:pipeline:compile` を 10 分ごとに実行します。
+Laravel scheduler が named callback `radiopipe:pipeline:compile:*` を JST 09:00 / 13:00 / 17:00 に実行します。
 Laravel Cloud など hosting platform 側で scheduler を起動する設定は別途必要です。

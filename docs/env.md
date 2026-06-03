@@ -110,7 +110,7 @@ Phase 6 `Topic Editorial Evaluation` の analyzer 設定です。
 
 ## Pipeline Schedule
 
-Laravel scheduler は named callback `radiopipe:pipeline:compile` を 10 分ごとに実行します。
+Laravel scheduler は named callback `radiopipe:pipeline:compile:*` を JST 09:00 / 13:00 / 17:00 に実行します。
 scheduled pipeline は `radiopipe:topics:nominate` を先に実行し、成功した場合だけ `radiopipe:episodes:compile` を実行します。
 hosting platform 側で Laravel scheduler を実行する設定は別途必要です。
 
