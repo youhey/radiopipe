@@ -179,6 +179,7 @@ class CandidateEpisodeCompiler
     {
         $query = CandidateTopic::query()
             ->where('editorial_status', 'pending');
+        CandidateTopic::excludeUsedInCompletedEpisodes($query);
         $query->getQuery()
             ->orderBy('editorial_score', 'desc')
             ->orderBy('processed_at', 'desc')

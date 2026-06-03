@@ -4,6 +4,7 @@ namespace Tests\Feature\Console;
 
 use App\Models\CandidateTopic;
 use App\Models\CharacterProfile;
+use App\Models\Episode;
 use App\Scenarios\Scenario;
 use App\Scenarios\ScenarioGenerationInput;
 use App\Scenarios\ScenarioGenerationResult;
@@ -30,6 +31,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
@@ -105,7 +107,7 @@ class CandidatePipelineCommandTest extends TestCase
         $this->assertDatabaseCount('episodes', 0);
     }
 
-    public function testEpisodesCompileCreatesEpisodeAndSkipsWhenFingerprintUnchanged(): void
+    public function testEpisodesCompileCreatesEpisodeAndSkipsNextRunWhenUsedCandidatesAreExcluded(): void
     {
         $this->profile();
         $this->bindPipeline();
@@ -116,7 +118,7 @@ class CandidatePipelineCommandTest extends TestCase
         $this->assertDatabaseCount('episodes', 1);
 
         self::assertSame(0, Artisan::call('radiopipe:episodes:compile'));
-        self::assertStringContainsString('Episode compile fingerprint unchanged; skipping generation.', Artisan::output());
+        self::assertStringContainsString('Skipped episode compile: not enough candidate topics. required=1 actual=0', Artisan::output());
         $this->assertDatabaseCount('episodes', 1);
     }
 
@@ -165,6 +167,144 @@ class CandidatePipelineCommandTest extends TestCase
         self::assertStringContainsString('Episode compiled: id=', Artisan::output());
         self::assertSame(1, $scenarioGenerator->callCount);
         $this->assertDatabaseCount('episodes', 1);
+    }
+
+    public function testEpisodesCompileExcludesPreviouslyUsedUpstreamArticles(): void
+    {
+        config(['radiopipe.episode.min_topics' => 2]);
+        $scenarioGenerator = new CandidatePipelineRecordingScenarioGenerator();
+        $this->profile();
+        $this->bindPipeline(
+            upstreamProvider: new CandidatePipelineRecordingUpstreamProvider([
+                $this->upstreamItem(1),
+                $this->upstreamItem(2),
+                $this->upstreamItem(3),
+            ]),
+            scenarioGenerator: $scenarioGenerator,
+        );
+
+        self::assertSame(0, Artisan::call('radiopipe:topics:nominate'));
+        $this->usedEpisodeTopic($this->episode(), [
+            'topic_id' => 'old-topic',
+            'upstream_provider' => 'fixture',
+            'upstream_id' => '1',
+        ]);
+
+        self::assertSame(0, Artisan::call('radiopipe:episodes:compile'));
+
+        self::assertSame(1, $scenarioGenerator->callCount);
+        $topicIds = $this->latestCompiledTopicIds();
+        self::assertNotContains('upstream:1', $topicIds);
+        self::assertContains('upstream:2', $topicIds);
+        self::assertContains('upstream:3', $topicIds);
+    }
+
+    public function testEpisodesCompileExcludesPreviouslyUsedTopicIds(): void
+    {
+        config(['radiopipe.episode.min_topics' => 2]);
+        $this->profile();
+        $this->bindPipeline(
+            upstreamProvider: new CandidatePipelineRecordingUpstreamProvider([
+                $this->upstreamItem(1),
+                $this->upstreamItem(2),
+                $this->upstreamItem(3),
+            ]),
+        );
+
+        self::assertSame(0, Artisan::call('radiopipe:topics:nominate'));
+        $candidate = CandidateTopic::query()->where('topic_id', 'upstream:1')->firstOrFail();
+        $candidateId = $candidate->getKey();
+        self::assertIsInt($candidateId);
+        $this->usedEpisodeTopic($this->episode(), [
+            'topic_id' => (string) $candidateId,
+            'upstream_provider' => 'different',
+            'upstream_id' => 'different',
+        ]);
+
+        self::assertSame(0, Artisan::call('radiopipe:episodes:compile'));
+
+        $topicIds = $this->latestCompiledTopicIds();
+        self::assertNotContains('upstream:1', $topicIds);
+        self::assertContains('upstream:2', $topicIds);
+        self::assertContains('upstream:3', $topicIds);
+    }
+
+    public function testEpisodesCompileDoesNotExcludeSelectedNotUsedTopics(): void
+    {
+        $this->profile();
+        $this->bindPipeline(
+            upstreamProvider: new CandidatePipelineRecordingUpstreamProvider([
+                $this->upstreamItem(1),
+                $this->upstreamItem(2),
+            ]),
+        );
+
+        self::assertSame(0, Artisan::call('radiopipe:topics:nominate'));
+        $this->usedEpisodeTopic($this->episode(), [
+            'topic_id' => 'upstream:1',
+            'upstream_provider' => 'fixture',
+            'upstream_id' => '1',
+            'scenario_selection_status' => 'selected_not_used',
+        ]);
+
+        self::assertSame(0, Artisan::call('radiopipe:episodes:compile'));
+
+        self::assertContains('upstream:1', $this->latestCompiledTopicIds());
+    }
+
+    public function testEpisodesCompileDoesNotExcludeTopicsFromFailedEpisodes(): void
+    {
+        $this->profile();
+        $this->bindPipeline(
+            upstreamProvider: new CandidatePipelineRecordingUpstreamProvider([
+                $this->upstreamItem(1),
+                $this->upstreamItem(2),
+            ]),
+        );
+
+        self::assertSame(0, Artisan::call('radiopipe:topics:nominate'));
+        $this->usedEpisodeTopic($this->episode(Episode::STATUS_FAILED), [
+            'topic_id' => 'upstream:1',
+            'upstream_provider' => 'fixture',
+            'upstream_id' => '1',
+        ]);
+
+        self::assertSame(0, Artisan::call('radiopipe:episodes:compile'));
+
+        self::assertContains('upstream:1', $this->latestCompiledTopicIds());
+    }
+
+    public function testEpisodesCompileDoesNotExcludeCandidatesByNullUpstreamIdsOnly(): void
+    {
+        $this->profile();
+        $this->bindPipeline(
+            upstreamProvider: new CandidatePipelineRecordingUpstreamProvider([
+                $this->upstreamItem(1),
+                $this->upstreamItem(2),
+            ]),
+        );
+
+        self::assertSame(0, Artisan::call('radiopipe:topics:nominate'));
+        $candidate = CandidateTopic::query()->where('topic_id', 'upstream:1')->firstOrFail();
+        $draft = $candidate->getAttribute('topic_draft_json');
+        self::assertIsArray($draft);
+        $draft['source_refs'] = [
+            'provider' => 'fixture',
+            'upstream_id' => null,
+        ];
+        $candidate->update([
+            'upstream_id' => null,
+            'topic_draft_json' => $draft,
+        ]);
+        $this->usedEpisodeTopic($this->episode(), [
+            'topic_id' => 'different-topic',
+            'upstream_provider' => 'fixture',
+            'upstream_id' => null,
+        ]);
+
+        self::assertSame(0, Artisan::call('radiopipe:episodes:compile'));
+
+        self::assertContains('upstream:1', $this->latestCompiledTopicIds());
     }
 
     private function bindPipeline(
@@ -233,6 +373,78 @@ class CandidatePipelineCommandTest extends TestCase
             fetchedAt: CarbonImmutable::parse('2026-05-25T12:00:00Z'),
             providerName: 'fixture',
         );
+    }
+
+    private function episode(string $status = Episode::STATUS_COMPLETED): Episode
+    {
+        return Episode::query()->create([
+            'episode_key' => 'episode_' . str_replace('.', '_', uniqid('', true)),
+            'date' => CarbonImmutable::parse('2026-05-25T00:00:00Z'),
+            'published_at' => CarbonImmutable::parse('2026-05-25T09:00:00Z'),
+            'processed_at' => CarbonImmutable::parse('2026-05-25T09:00:00Z'),
+            'character_key' => 'neko_nyan_balanced_radio',
+            'status' => $status,
+            'title' => '過去の Episode',
+            'language' => 'ja',
+            'target_duration_seconds' => 900,
+            'estimated_duration_seconds' => 90,
+            'scenario_json' => [
+                'title' => '過去の Episode',
+                'sections' => [],
+            ],
+            'metadata' => [],
+        ]);
+    }
+
+    /**
+     * @param array<string, mixed> $overrides
+     */
+    private function usedEpisodeTopic(Episode $episode, array $overrides = []): void
+    {
+        $episode->topics()->create(array_merge([
+            'topic_id' => 'upstream:1',
+            'upstream_provider' => 'fixture',
+            'upstream_id' => '1',
+            'source_name' => 'Hacker News',
+            'source_type' => 'upstream',
+            'title' => 'Topic 1',
+            'url' => 'https://example.test/articles/1',
+            'screening_status' => 'passed',
+            'editorial_status' => 'pending',
+            'scenario_selection_status' => 'used_in_scenario',
+            'sort_order' => 1,
+            'topic_draft_json' => [],
+            'screening_json' => [],
+            'editorial_json' => [],
+            'scenario_selection_json' => [
+                'status' => 'used_in_scenario',
+            ],
+            'metadata' => [],
+        ], $overrides));
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function latestCompiledTopicIds(): array
+    {
+        $episode = Episode::query()
+            ->where('episode_key', 'like', 'episode_2026-%')
+            ->latest('id')
+            ->firstOrFail();
+        $episodeId = $episode->getKey();
+        self::assertIsInt($episodeId);
+
+        /** @var list<string> $topicIds */
+        $topicIds = DB::table('episode_topics')
+            ->where('episode_id', $episodeId)
+            ->orderBy('id')
+            ->pluck('topic_id')
+            ->filter(static fn (mixed $topicId): bool => is_string($topicId))
+            ->values()
+            ->all();
+
+        return $topicIds;
     }
 }
 

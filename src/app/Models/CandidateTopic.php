@@ -10,7 +10,9 @@ use App\Topics\Editorial\TopicEditorialStatus;
 use App\Topics\Editorial\TopicLocalizedText;
 use App\Topics\Editorial\TopicScenarioNotes;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 
 /**
  * Episode 生成前に再利用する topic candidate の永続化モデル。
@@ -99,6 +101,38 @@ class CandidateTopic extends Model
                 $this->arrayValue($editorial['metadata'] ?? null),
             ),
         );
+    }
+
+    /**
+     * 過去の完了 Episode で実際に使われた CandidateTopic を除外する。
+     *
+     * @param Builder<CandidateTopic> $query
+     */
+    public static function excludeUsedInCompletedEpisodes(Builder $query): void
+    {
+        $query->getQuery()->whereNotExists(static function (QueryBuilder $query): void {
+            $query
+                ->selectRaw('1')
+                ->from('episode_topics')
+                ->join('episodes', 'episodes.id', '=', 'episode_topics.episode_id')
+                ->where('episode_topics.scenario_selection_status', 'used_in_scenario')
+                ->whereIn('episodes.status', [
+                    Episode::STATUS_COMPLETED,
+                    Episode::STATUS_COMPLETED_WITH_ERRORS,
+                ])
+                ->where(static function (QueryBuilder $query): void {
+                    $query
+                        ->whereColumn('episode_topics.topic_id', 'candidate_topics.topic_id')
+                        ->orWhereColumn('episode_topics.topic_id', 'candidate_topics.id')
+                        ->orWhere(static function (QueryBuilder $query): void {
+                            $query
+                                ->whereNotNull('candidate_topics.upstream_provider')
+                                ->whereNotNull('candidate_topics.upstream_id')
+                                ->whereColumn('episode_topics.upstream_provider', 'candidate_topics.upstream_provider')
+                                ->whereColumn('episode_topics.upstream_id', 'candidate_topics.upstream_id');
+                        });
+                });
+        });
     }
 
     /**
