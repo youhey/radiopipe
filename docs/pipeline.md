@@ -29,6 +29,7 @@ CandidateTopic は再利用可能な入力、EpisodeTopic は生成履歴側の�
 `radiopipe:episodes:compile`:
 
 - 保存済み CandidateTopic から Scenario を生成します。
+- `editorial_status = pending` の CandidateTopic が `RADIOPIPE_EPISODE_MIN_TOPICS` 未満の場合は Scenario 生成を行わず成功扱いで skip します。
 - `compile_fingerprint` が最新 Episode と同じ場合は skip します。
 - fingerprint が変わった場合だけ新しい Episode と EpisodeTopic を保存します。
 - 既存 Episode は上書きしません。
@@ -49,6 +50,7 @@ lock が有効な間の nominate 実行は skip され、exit code は 0 です�
 設定:
 
 ```env
+RADIOPIPE_EPISODE_MIN_TOPICS=5
 RADIOPIPE_TOPIC_NOMINATION_THROTTLE_SECONDS=3600
 ```
 

@@ -13,6 +13,8 @@ use App\Topics\Candidates\StableJsonFingerprint;
 use App\Topics\Editorial\TopicEditorialEvaluation;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
+use RuntimeException;
 
 /**
  * 保存済み CandidateTopic から Scenario と Episode を作る。
@@ -48,6 +50,101 @@ class CandidateEpisodeCompiler
     public function export(CharacterProfile $characterProfile, int $limit): CandidateEpisodeCompilationResult
     {
         $candidates = $this->candidateTopics($limit);
+
+        return $this->buildCompilationResult($characterProfile, $candidates);
+    }
+
+    /**
+     * CandidateTopic input が変わっている場合だけ Episode を保存する。
+     */
+    public function compile(CharacterProfile $characterProfile, int $limit, CarbonImmutable $processedAt): CandidateEpisodeCompilationResult
+    {
+        $candidates = $this->candidateTopics($limit);
+        $minTopics = max(1, $this->intConfig('radiopipe.episode.min_topics', 5));
+        $candidateCount = $candidates->count();
+
+        if ($candidateCount < $minTopics) {
+            Log::info('Skipped radiopipe episode compile: not enough candidate topics.', [
+                'command' => 'radiopipe:episodes:compile',
+                'reason' => 'not_enough_candidate_topics',
+                'required' => $minTopics,
+                'actual' => $candidateCount,
+                'character_profile_id' => $characterProfile->id,
+                'character_key' => $characterProfile->character_key,
+            ]);
+
+            return new CandidateEpisodeCompilationResult(
+                scenarioResult: null,
+                topicSelections: [],
+                candidateTopics: array_values($candidates->all()),
+                pipelineItems: [],
+                compileFingerprint: '',
+                skipped: true,
+                episode: null,
+                skipReason: 'not_enough_candidate_topics',
+                requiredCandidateTopicCount: $minTopics,
+                actualCandidateTopicCount: $candidateCount,
+            );
+        }
+
+        $result = $this->buildCompilationResult($characterProfile, $candidates);
+        $scenarioResult = $result->scenarioResult;
+
+        if ($scenarioResult === null) {
+            throw new RuntimeException('Scenario result is required for episode compilation.');
+        }
+
+        $latest = $this->latestEpisode($characterProfile->character_key);
+        $latestMetadata = $latest instanceof Episode ? $latest->getAttribute('metadata') : null;
+        $latestMetadata = is_array($latestMetadata) ? $latestMetadata : [];
+
+        if (($latestMetadata['compile_fingerprint'] ?? null) === $result->compileFingerprint) {
+            return new CandidateEpisodeCompilationResult(
+                scenarioResult: $scenarioResult,
+                topicSelections: $result->topicSelections,
+                candidateTopics: $result->candidateTopics,
+                pipelineItems: $result->pipelineItems,
+                compileFingerprint: $result->compileFingerprint,
+                skipped: true,
+                episode: $latest,
+                skipReason: 'compile_fingerprint_unchanged',
+            );
+        }
+
+        $episode = $this->episodeRecorder->record(new EpisodeRecordInput(
+            result: $scenarioResult,
+            pipelineItems: $result->pipelineItems,
+            characterProfile: $characterProfile,
+            episodeKey: $this->episodeKey($processedAt, $characterProfile->character_key),
+            date: $processedAt,
+            publishedAt: $processedAt,
+            processedAt: $processedAt,
+            metadata: [
+                'command' => 'radiopipe:episodes:compile',
+                'compile_fingerprint' => $result->compileFingerprint,
+                'candidate_topic_count' => count($result->candidateTopics),
+                'generator' => $scenarioResult->metadata['generator'] ?? null,
+            ],
+        ));
+
+        return new CandidateEpisodeCompilationResult(
+            scenarioResult: $scenarioResult,
+            topicSelections: $result->topicSelections,
+            candidateTopics: $result->candidateTopics,
+            pipelineItems: $result->pipelineItems,
+            compileFingerprint: $result->compileFingerprint,
+            skipped: false,
+            episode: $episode,
+        );
+    }
+
+    /**
+     * CandidateTopic から Scenario と compile metadata を組み立てる。
+     *
+     * @param Collection<int, CandidateTopic> $candidates
+     */
+    private function buildCompilationResult(CharacterProfile $characterProfile, Collection $candidates): CandidateEpisodeCompilationResult
+    {
         $editorialEvaluations = $this->editorialEvaluations($candidates);
         $topicSelections = $this->topicSelector->select(
             $editorialEvaluations,
@@ -72,55 +169,6 @@ class CandidateEpisodeCompiler
             compileFingerprint: $compileFingerprint,
             skipped: false,
             episode: null,
-        );
-    }
-
-    /**
-     * CandidateTopic input が変わっている場合だけ Episode を保存する。
-     */
-    public function compile(CharacterProfile $characterProfile, int $limit, CarbonImmutable $processedAt): CandidateEpisodeCompilationResult
-    {
-        $result = $this->export($characterProfile, $limit);
-        $latest = $this->latestEpisode($characterProfile->character_key);
-        $latestMetadata = $latest instanceof Episode ? $latest->getAttribute('metadata') : null;
-        $latestMetadata = is_array($latestMetadata) ? $latestMetadata : [];
-
-        if (($latestMetadata['compile_fingerprint'] ?? null) === $result->compileFingerprint) {
-            return new CandidateEpisodeCompilationResult(
-                scenarioResult: $result->scenarioResult,
-                topicSelections: $result->topicSelections,
-                candidateTopics: $result->candidateTopics,
-                pipelineItems: $result->pipelineItems,
-                compileFingerprint: $result->compileFingerprint,
-                skipped: true,
-                episode: $latest,
-            );
-        }
-
-        $episode = $this->episodeRecorder->record(new EpisodeRecordInput(
-            result: $result->scenarioResult,
-            pipelineItems: $result->pipelineItems,
-            characterProfile: $characterProfile,
-            episodeKey: $this->episodeKey($processedAt, $characterProfile->character_key),
-            date: $processedAt,
-            publishedAt: $processedAt,
-            processedAt: $processedAt,
-            metadata: [
-                'command' => 'radiopipe:episodes:compile',
-                'compile_fingerprint' => $result->compileFingerprint,
-                'candidate_topic_count' => count($result->candidateTopics),
-                'generator' => $result->scenarioResult->metadata['generator'] ?? null,
-            ],
-        ));
-
-        return new CandidateEpisodeCompilationResult(
-            scenarioResult: $result->scenarioResult,
-            topicSelections: $result->topicSelections,
-            candidateTopics: $result->candidateTopics,
-            pipelineItems: $result->pipelineItems,
-            compileFingerprint: $result->compileFingerprint,
-            skipped: false,
-            episode: $episode,
         );
     }
 

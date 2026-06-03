@@ -51,6 +51,14 @@ class EpisodesCompileCommand extends Command
         }
 
         if ($result->skipped) {
+            if ($result->skipReason === 'not_enough_candidate_topics') {
+                $required = $result->requiredCandidateTopicCount ?? 0;
+                $actual = $result->actualCandidateTopicCount ?? count($result->candidateTopics);
+                $this->line("Skipped episode compile: not enough candidate topics. required={$required} actual={$actual}");
+
+                return self::SUCCESS;
+            }
+
             $this->line('Episode compile fingerprint unchanged; skipping generation.');
 
             return self::SUCCESS;

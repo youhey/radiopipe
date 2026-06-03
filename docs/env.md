@@ -112,10 +112,12 @@ Phase 6 `Topic Editorial Evaluation` の analyzer 設定です。
 
 Laravel scheduler は named callback `radiopipe:pipeline:compile:*` を JST 09:00 / 13:00 / 17:00 に実行します。
 scheduled pipeline は `radiopipe:topics:nominate` を先に実行し、成功した場合だけ `radiopipe:episodes:compile` を実行します。
+`radiopipe:episodes:compile` は pending CandidateTopic が最小件数に満たない場合、Scenario 生成を行わず成功扱いで skip します。
 hosting platform 側で Laravel scheduler を実行する設定は別途必要です。
 
 | 変数 | 既定値 | 説明 |
 |---|---|---|
+| `RADIOPIPE_EPISODE_MIN_TOPICS` | `5` | Episode 生成に必要な `editorial_status = pending` の CandidateTopic 最小件数。未満の場合は Scenario 生成を skip。 |
 | `RADIOPIPE_TOPIC_NOMINATION_THROTTLE_SECONDS` | `3600` | `topics:nominate` の成功後に再実行を skip する throttle lock TTL。`0` 以下で無効。 |
 
 ## Admin

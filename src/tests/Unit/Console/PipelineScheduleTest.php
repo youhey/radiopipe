@@ -56,6 +56,7 @@ class PipelineScheduleTest extends TestCase
 
     public function testScheduledPipelineCallbackRunsNominationThenCompilation(): void
     {
+        config(['radiopipe.episode.min_topics' => 1]);
         CharacterProfile::factory()->create([
             'character_key' => 'neko_nyan_balanced_radio',
             'name' => 'ねこにゃん',

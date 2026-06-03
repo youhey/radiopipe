@@ -42,10 +42,11 @@ php artisan radiopipe:episodes:compile --character=neko_nyan_balanced_radio
 Automatic episode generation is disabled by default. Enable and configure the Laravel scheduler with environment variables:
 
 ```env
+RADIOPIPE_EPISODE_MIN_TOPICS=5
 RADIOPIPE_TOPIC_NOMINATION_THROTTLE_SECONDS=3600
 ```
 
-Laravel's scheduler registers named callbacks for `radiopipe:pipeline:compile` at JST 09:00, 13:00, and 17:00 with `withoutOverlapping(30)`. Each callback runs `radiopipe:topics:nominate` first, then `radiopipe:episodes:compile` only if nomination succeeds. Topic nomination uses a throttle lock controlled by `RADIOPIPE_TOPIC_NOMINATION_THROTTLE_SECONDS`. The hosting platform still needs to run Laravel's scheduler; Laravel Cloud scheduler setup is a deployment concern for a later task.
+Laravel's scheduler registers named callbacks for `radiopipe:pipeline:compile` at JST 09:00, 13:00, and 17:00 with `withoutOverlapping(30)`. Each callback runs `radiopipe:topics:nominate` first, then `radiopipe:episodes:compile` only if nomination succeeds. Episode compile skips successfully without scenario generation when fewer than `RADIOPIPE_EPISODE_MIN_TOPICS` pending candidate topics are available. Topic nomination uses a throttle lock controlled by `RADIOPIPE_TOPIC_NOMINATION_THROTTLE_SECONDS`. The hosting platform still needs to run Laravel's scheduler; Laravel Cloud scheduler setup is a deployment concern for a later task.
 
 ## Development Checks
 

@@ -51,6 +51,12 @@ class EpisodesExportCommand extends Command
             return self::FAILURE;
         }
 
+        if ($result->scenarioResult === null) {
+            $this->error('Scenario result is required for episode export.');
+
+            return self::FAILURE;
+        }
+
         $output = [
             'schema_version' => '1.0',
             'character' => [

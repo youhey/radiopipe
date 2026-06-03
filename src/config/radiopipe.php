@@ -75,6 +75,10 @@ return [
         'target_seconds' => (int) env('RADIOPIPE_SCENARIO_TARGET_SECONDS', 900),
     ],
 
+    'episode' => [
+        'min_topics' => (int) env('RADIOPIPE_EPISODE_MIN_TOPICS', 5),
+    ],
+
     'topic_nomination' => [
         'throttle_seconds' => (int) env('RADIOPIPE_TOPIC_NOMINATION_THROTTLE_SECONDS', 3600),
     ],

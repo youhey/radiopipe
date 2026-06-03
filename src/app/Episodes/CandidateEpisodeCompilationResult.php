@@ -12,7 +12,7 @@ use App\Scenarios\ScenarioTopicSelection;
  */
 class CandidateEpisodeCompilationResult
 {
-    public ScenarioGenerationResult $scenarioResult;
+    public ?ScenarioGenerationResult $scenarioResult;
 
     /** @var list<ScenarioTopicSelection> */
     public array $topicSelections;
@@ -29,6 +29,12 @@ class CandidateEpisodeCompilationResult
 
     public ?Episode $episode;
 
+    public ?string $skipReason;
+
+    public ?int $requiredCandidateTopicCount;
+
+    public ?int $actualCandidateTopicCount;
+
     /**
      * Constructor.
      *
@@ -37,13 +43,16 @@ class CandidateEpisodeCompilationResult
      * @param list<array<string, mixed>> $pipelineItems
      */
     public function __construct(
-        ScenarioGenerationResult $scenarioResult,
+        ?ScenarioGenerationResult $scenarioResult,
         array $topicSelections,
         array $candidateTopics,
         array $pipelineItems,
         string $compileFingerprint,
         bool $skipped,
         ?Episode $episode,
+        ?string $skipReason = null,
+        ?int $requiredCandidateTopicCount = null,
+        ?int $actualCandidateTopicCount = null,
     ) {
         $this->scenarioResult = $scenarioResult;
         $this->topicSelections = $topicSelections;
@@ -52,5 +61,8 @@ class CandidateEpisodeCompilationResult
         $this->compileFingerprint = $compileFingerprint;
         $this->skipped = $skipped;
         $this->episode = $episode;
+        $this->skipReason = $skipReason;
+        $this->requiredCandidateTopicCount = $requiredCandidateTopicCount;
+        $this->actualCandidateTopicCount = $actualCandidateTopicCount;
     }
 }

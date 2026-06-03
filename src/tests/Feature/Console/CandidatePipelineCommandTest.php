@@ -45,6 +45,7 @@ class CandidatePipelineCommandTest extends TestCase
 
         Cache::clear();
         config([
+            'radiopipe.episode.min_topics' => 1,
             'radiopipe.topic_nomination.throttle_seconds' => 0,
         ]);
     }
@@ -116,6 +117,53 @@ class CandidatePipelineCommandTest extends TestCase
 
         self::assertSame(0, Artisan::call('radiopipe:episodes:compile'));
         self::assertStringContainsString('Episode compile fingerprint unchanged; skipping generation.', Artisan::output());
+        $this->assertDatabaseCount('episodes', 1);
+    }
+
+    public function testEpisodesCompileSkipsWithoutScenarioGenerationWhenCandidateTopicsAreInsufficient(): void
+    {
+        config(['radiopipe.episode.min_topics' => 5]);
+        $scenarioGenerator = new CandidatePipelineRecordingScenarioGenerator();
+        $this->profile();
+        $this->bindPipeline(
+            upstreamProvider: new CandidatePipelineRecordingUpstreamProvider([
+                $this->upstreamItem(1),
+                $this->upstreamItem(2),
+                $this->upstreamItem(3),
+            ]),
+            scenarioGenerator: $scenarioGenerator,
+        );
+
+        self::assertSame(0, Artisan::call('radiopipe:topics:nominate'));
+        $this->assertDatabaseCount('candidate_topics', 3);
+
+        self::assertSame(0, Artisan::call('radiopipe:episodes:compile'));
+
+        self::assertStringContainsString('Skipped episode compile: not enough candidate topics. required=5 actual=3', Artisan::output());
+        self::assertSame(0, $scenarioGenerator->callCount);
+        $this->assertDatabaseCount('episodes', 0);
+        $this->assertDatabaseCount('episode_topics', 0);
+    }
+
+    public function testEpisodesCompileUsesConfiguredMinimumCandidateTopicCount(): void
+    {
+        config(['radiopipe.episode.min_topics' => 3]);
+        $scenarioGenerator = new CandidatePipelineRecordingScenarioGenerator();
+        $this->profile();
+        $this->bindPipeline(
+            upstreamProvider: new CandidatePipelineRecordingUpstreamProvider([
+                $this->upstreamItem(1),
+                $this->upstreamItem(2),
+                $this->upstreamItem(3),
+            ]),
+            scenarioGenerator: $scenarioGenerator,
+        );
+
+        self::assertSame(0, Artisan::call('radiopipe:topics:nominate'));
+        self::assertSame(0, Artisan::call('radiopipe:episodes:compile'));
+
+        self::assertStringContainsString('Episode compiled: id=', Artisan::output());
+        self::assertSame(1, $scenarioGenerator->callCount);
         $this->assertDatabaseCount('episodes', 1);
     }
 
@@ -314,8 +362,12 @@ class CandidatePipelineRecordingTopicEditorialAnalyzer implements TopicEditorial
  */
 class CandidatePipelineRecordingScenarioGenerator implements ScenarioGenerator
 {
+    public int $callCount = 0;
+
     public function generate(ScenarioGenerationInput $input): ScenarioGenerationResult
     {
+        ++$this->callCount;
+
         return new ScenarioGenerationResult(
             scenario: new Scenario(
                 title: '今日のギークニュース',
